@@ -1,0 +1,395 @@
+/* Importa as fontes pixeladas */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+/* ----- Configurações Globais ----- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'VT323', monospace;
+    font-size: 1.35rem;
+    background-color: #e5e9f0; /* Fundo azul acinzentado claro */
+    color: #3b4252; /* Cinza azulado escuro */
+    line-height: 1.5;
+    padding: 20px; /* Mais padding geral */
+    background-image: url('https://wallpapers.com/images/hd/stardew-valley-2d-game-farm-landscape-4sjwb2my7po60x8a.webp');
+    background-size: cover;
+    /* ALTERAÇÃO AQUI: Removido ou mudado para 'scroll' */
+    /* background-attachment: fixed; */
+    background-attachment: scroll; /* Ou apague esta linha */
+    background-position: center center;
+    position: relative;
+    min-height: 100vh;
+}
+body::before { /* Overlay para melhorar a legibilidade sobre a imagem de fundo */
+    content: '';
+    /* ALTERAÇÃO AQUI */
+    position: fixed; /* Fixa o overlay na janela de visualização */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Ajuste a cor e a opacidade (último valor, 0.0 a 1.0) como desejar */
+    background-color: rgba(236, 239, 244, 0.4); /* Azul acinzentado MUITO claro, 80% opaco */
+    z-index: -1; /* Fica abaixo do conteúdo */
+}
+h1, h2, h3, h4, th {
+    font-family: 'Press Start 2P', cursive; line-height: 1.4; color: #434c5e; /* Azul acinzentado médio */
+}
+ header h1 {
+  /* Mantenha o seu estilo atual para centralizar o H1 */
+  font-size: 2rem; /* Ou o tamanho que preferir */
+  text-align: center;
+  margin-bottom: 35px; /* Ou o espaçamento que preferir */
+  color: #865102; /* Ou a cor que preferir */
+  /* Adicione line-height se o texto estiver muito colado nas imagens */
+  /* line-height: 1.5; */ /* Ajuste conforme necessário */
+}
+
+header h1 img {
+  /* Ajuste o tamanho das imagens se necessário */
+  width: 40px; /* Exemplo de tamanho */
+  height: 40px; /* Exemplo de tamanho */
+  /* A propriedade chave para o alinhamento vertical */
+  vertical-align: middle;
+  /* Adicione margens laterais se quiser mais espaço */
+  /* margin-left: 8px; */
+  /* margin-right: 8px; */
+}
+h2.section-title {
+    font-size: 1.15rem; color: #5e81ac; border-bottom: 3px solid #88c0d0;
+    padding-bottom: 12px; margin-bottom: 25px; display: flex; align-items: center;
+    justify-content: center; gap: 15px;
+}
+
+#resumo-imagem-cultivo {
+    width: 48px; height: 48px; image-rendering: pixelated; vertical-align: middle;
+    background-color: rgba(255, 255, 255, 0.8); border: 3px solid #81a1c1;
+    border-radius: 8px; display: none;
+}
+#resumo-texto { display: block; }
+
+/* ----- Contêiner Principal ----- */
+#calculadora-container {
+    max-width: 1200px; margin: 25px auto; background-color: #eceff4; /* Fundo interno */
+    border: 5px solid #5e81ac; border-radius: 12px; padding: 30px 35px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ----- Seção de Inputs ----- */
+#inputs { margin-bottom: 40px; border-bottom: 4px dashed #88c0d0; padding-bottom: 30px;}
+#calc-form {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px 20px;
+}
+.form-group { display: flex; flex-direction: column; }
+.form-group label {
+    font-family: 'Press Start 2P', cursive; font-size: 0.75rem; color: #4c566a;
+    margin-bottom: 8px; text-align: left;
+}
+input[type="number"], select {
+    width: 100%; padding: 12px 16px; font-size: 1.4rem; font-family: 'VT323', monospace;
+    color: #3b4252; border: 3px solid #88c0d0; border-radius: 6px;
+    background-color: #f8f9fb; /* Fundo input quase branco */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+select { cursor: pointer; }
+input:focus, select:focus { outline: none; border-color: #81a1c1; box-shadow: 0 0 5px rgba(129, 161, 193, 0.5); }
+.form-group.placeholder { display: none; }
+
+/* Botão */
+button[type="submit"] {
+    grid-column: 1 / -1; padding: 16px; font-family: 'Press Start 2P', cursive; font-size: 1rem;
+    color: #eceff4; background-color: #8fbcbb; border: 3px solid #81a1c1; border-radius: 8px;
+    cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease; margin-top: 25px;
+    text-shadow: 1px 1px #4c566a; box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+}
+button[type="submit"]:hover { background-color: #81a1c1; box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+
+/* ----- Seção de Resumo ----- */
+#resumo { margin-bottom: 40px; }
+.resumo-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px; background-color: #eceff4;
+    padding: 20px; border: 3px solid #88c0d0; border-radius: 8px; font-size: 1.35rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.resumo-grid p {
+    display: flex; justify-content: space-between; border-bottom: 2px dotted #d8e1e8;
+    padding-bottom: 8px; margin-bottom: 6px;
+}
+.resumo-grid p:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.resumo-grid strong { font-family: 'VT323', monospace; font-weight: normal; color: #a3be8c; }
+.resumo-grid .negativo { color: #bf616a !important; }
+
+/* ----- Seção de Resultados (TABELA RESPONSIVA) ----- */
+.table-container {
+    overflow-x: auto; border: 3px solid #5e81ac; border-radius: 8px; background-color: #eceff4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+#detalhes table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.25rem;
+    table-layout: auto; /* Deixa o navegador balancear, mas ajustamos padding */
+}
+#detalhes th, #detalhes td {
+    padding: 12px 10px; /* Padding mais equilibrado */
+    border-bottom: 2px solid #b4c5da; /* Borda azul clara */
+    text-align: center; /* Centraliza tudo por padrão */
+    vertical-align: middle; /* Alinha verticalmente */
+}
+
+/* Fonte Arial para valores */
+#detalhes td:not(:first-child),
+#detalhes td:not(:first-child) span {
+    font-family: Arial, sans-serif;
+    font-size: 1.15rem;
+}
+
+/* Cabeçalho da Tabela */
+#detalhes th {
+    font-family: 'Press Start 2P', cursive; font-size: 0.75rem; /* Menor para caber */
+    background-color: #d8dee9; color: #434c5e; white-space: nowrap; border-bottom-width: 3px;
+    border-bottom-color: #5e81ac; padding-top: 14px; padding-bottom: 14px;
+    text-shadow: 1px 1px rgba(255, 255, 255, 0.2);
+    /* Tenta dar larguras mais ou menos iguais */
+    width: 20%; /* Ajuste este valor se necessário */
+}
+#detalhes th:first-child { /* Métrica */
+    background-color: #b4c5da; color: #3b4252;
+    width: 20%; /* Largura fixa para a primeira coluna */
+    text-align: left; /* Alinha métrica à esquerda */
+}
+
+/* Cores dos Cabeçalhos */
+#detalhes th.th-direta, #detalhes th.th-direta_e_mel { background-color: #e5e9f0; color: #4c566a; border-bottom-color: #b4c5da;}
+#detalhes th.th-geleia_picles { background-color: #a3be8c; color: #eceff4; border-bottom-color: #8fbcbb;} /* Verde Suave */
+#detalhes th.th-vinho { background-color: #b48ead; color: #eceff4; border-bottom-color: #8f7b9b;} /* Roxo Suave */
+#detalhes th.th-suco { background-color: #ebcb8b; color: #4c566a; border-bottom-color: #d08770;} /* Amarelo/Laranja Suave */
+#detalhes th.th-fruta_ressecada, #detalhes th.th-passas { background-color: #d08770; color: #eceff4; border-bottom-color: #bf616a;} /* Salmão/Marrom */
+#detalhes th.th-pale_ale, #detalhes th.th-cerveja { background-color: #ebcb8b; color: #4c566a; border-bottom-color: #d08770;}
+#detalhes th.th-oleo { background-color: #fffacd; color: #4c566a; border-bottom-color: #ebcb8b;}
+#detalhes th.th-mel_de_flor, #detalhes th.th-hidromel { background-color: #ebcb8b; color: #4c566a; border-bottom-color: #d08770;}
+#detalhes th.th-cafe, #detalhes th.th-cha_verde, #detalhes th.th-vinagre, #detalhes th.th-arroz { background-color: #d8dee9; color: #4c566a; border-bottom-color: #b4c5da;}
+
+/* Célula de Métrica */
+#detalhes td:first-child {
+    font-family: 'Press Start 2P', cursive; font-size: 0.8rem; text-align: left;
+    color: #5e81ac; white-space: nowrap; border-right: 2px solid #b4c5da;
+    background-color: #e5e9f0;
+}
+#detalhes tbody tr:nth-child(even) { background-color: #eff3f8; }
+#detalhes tbody tr:hover { background-color: #d8e1e8; }
+
+/* ATUALIZAÇÃO V4.11: Remove fundo da linha de lucro */
+/* #detalhes tr.profit-row { background-color: #d1e7dd !important; } */
+/* #detalhes tr.profit-row td:first-child { background-color: #b8d9c1; } */
+
+/* ATUALIZAÇÃO V4.11: Cor verde para label e valores do lucro */
+#detalhes tr.profit-row td:first-child { /* Label "Lucro (Total)" */
+    color: #a3be8c !important; /* Verde */
+}
+#detalhes tr.profit-row td span.lucro-positivo { /* Valor positivo do lucro */
+    color: #a3be8c !important; /* Verde */
+}
+/* Lucro negativo continua vermelho (já definido por .lucro-negativo) */
+
+/* ATUALIZAÇÃO V4.13: LABEL E VALORES do Custo em vermelho */
+#detalhes tr.cost-row td:first-child {
+    color: #bf616a !important; /* Label "Custo (Total)" fica vermelho */
+}
+
+.lucro-positivo { color: #a3be8c !important; } /* Verde Suave */
+.lucro-negativo { color: #bf616a !important; } /* Vermelho Suave */
+.tempo-total { color: #3b4252; font-size: 1.15rem; }
+.tempo-item { color: #4c566a; font-size: 1.05rem; display: block; margin-top: 3px; }
+.input-note-table { font-size: 0.95rem; color: #5e81ac; display: block; text-align: center; margin-top: 4px; }
+
+/* Footer */
+/* Footer */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 1.15rem; /* Você já tinha isso */
+    color: #5e81ac; /* Você já tinha isso */
+
+    /* ----- NOVAS LINHAS PARA LEGIBILIDADE ----- */
+    background-color: rgba(236, 239, 244, 0.75); /* Fundo azul-acinzentado claro (eceff4) com 75% de opacidade */
+    padding: 15px 10px; /* Adiciona um respiro interno */
+    border-radius: 8px; /* Cantos arredondados (opcional) */
+    max-width: 600px; /* Limita a largura do fundo (opcional) */
+    margin-left: auto; /* Centraliza o rodapé se max-width for usado */
+    margin-right: auto; /* Centraliza o rodapé se max-width for usado */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave (opcional) */
+}
+
+/* Garante que o link dentro do rodapé também contraste */
+footer a {
+    color: #434c5e; /* Cor mais escura para o link */
+    text-decoration: none;
+    font-weight: bold; /* Deixa o link mais forte */
+}
+
+footer a:hover {
+    text-decoration: underline;
+    color: #d08770; /* Cor de destaque no hover (opcional) */
+}
+
+/* Estilo para a linha do desenvolvedor (se você usou a classe) */
+footer p.desenvolvedor {
+    font-size: 1.0rem;
+    color: #4c566a;
+    margin-top: 5px;
+}
+
+/* (Opcional) Adicionar uma sombra leve ao texto para contraste extra */
+footer p {
+ text-shadow: 1px 1px 2px rgba(216, 222, 233, 0.6); /* Sombra clara sutil (d8dee9 com opacidade) */
+}
+
+/* ----- Seção de Notas Explicativas (Acordeão Customizado) ----- */
+
+.notas-container {
+    margin-bottom: 30px;
+}
+
+/* Container principal do acordeão */
+.accordion {
+    background-color: #eceff4;
+    border: 3px dashed #88c0d0;
+    border-radius: 8px;
+    overflow: hidden; /* Mantém conteúdo dentro das bordas arredondadas */
+}
+
+/* Cabeçalho clicável (botão) */
+.accordion-header {
+    background-color: #e5e9f0;
+    width: 100%; /* Ocupa toda a largura */
+    border: none; /* Remove borda padrão do botão */
+    border-bottom: 2px solid #d8e1e8; /* Linha separadora quando fechado */
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-align: left; /* Alinha texto do botão à esquerda */
+
+    /* Estilo do texto do cabeçalho */
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.1rem;
+    color: #5e81ac;
+}
+
+.accordion-header img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Ícone indicador (+/- ou seta) */
+.accordion-icon {
+    margin-left: auto; /* Empurra o ícone para a direita */
+    font-weight: bold;
+    font-size: 1.6rem; /* Tamanho do ícone */
+    color: #88c0d0;
+    transition: transform 0.2s ease-in-out; /* Animação suave */
+}
+
+.accordion-icon::before {
+    content: '+'; /* Ícone padrão (fechado) */
+    display: inline-block; /* Permite transformação */
+}
+
+/* Estilo do cabeçalho QUANDO o acordeão está ativo/aberto */
+.accordion.active .accordion-header {
+    border-bottom-color: transparent; /* Remove a linha quando aberto */
+    background-color: #d8dee9; /* Fundo um pouco mais escuro (opcional) */
+}
+
+.accordion.active .accordion-icon::before {
+    /* content: '-'; /* Muda para '-' */
+     transform: rotate(45deg); /* Gira o '+' para 'x' */
+}
+
+
+/* Conteúdo que expande/recolhe */
+.accordion-content {
+    background-color: #eceff4; /* Fundo do conteúdo */
+    overflow: hidden; /* Essencial para a animação */
+    max-height: 0; /* Começa escondido */
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out; /* Animação suave */
+    padding: 0 25px; /* Padding vertical será 0 inicialmente */
+
+    /* Estilos do texto interno (já definidos antes, mas com o seletor ajustado) */
+    font-size: 1.2rem;
+    color: #4c566a;
+}
+
+/* Quando o acordeão está ativo, define altura máxima e padding vertical */
+.accordion.active .accordion-content {
+    /* max-height: 500px; */ /* Altura máxima estimada - JS pode fazer melhor */
+    /* Padding vertical aparece durante a animação */
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 2px solid #d8e1e8; /* Linha separadora quando aberto */
+}
+
+
+/* ----- Estilos para o conteúdo (listas, parágrafos) DENTRO de .accordion-content ----- */
+/* Os estilos internos (ul, li, p, a) permanecem os mesmos,
+   apenas garanta que os seletores usem '.accordion-content' */
+
+.accordion-content ul { list-style: none; padding-left: 0; margin-bottom: 15px; }
+.accordion-content li { margin-bottom: 12px; padding-left: 25px; position: relative; line-height: 1.5; }
+.accordion-content li::before { content: '»'; color: #88c0d0; position: absolute; left: 5px; top: 0px; font-weight: bold; font-size: 1.4rem; }
+.accordion-content ul ul { margin-top: 8px; margin-bottom: 5px; padding-left: 15px; }
+.accordion-content ul ul li { margin-bottom: 6px; font-size: 1.1rem; }
+.accordion-content ul ul li::before { content: '-'; font-size: 1.2rem; color: #b48ead; left: 0px; }
+.accordion-content p { text-align: center; font-size: 1.1rem; margin-top: 20px; border-top: 2px dotted #d8e1e8; padding-top: 15px; }
+.accordion-content a { color: #5e81ac; font-weight: bold; text-decoration: none; }
+.accordion-content a:hover { text-decoration: underline; }
+
+/* ----- RESPONSIVIDADE ----- */
+@media screen and (max-width: 850px) { /* Tabela Mobile */
+    #detalhes table { font-size: 1.1rem; }
+    #detalhes th, #detalhes td { padding: 8px 6px; }
+    #detalhes table thead { display: none; }
+    #detalhes table, #detalhes tbody, #detalhes tr, #detalhes td { display: block; width: 100%; }
+    #detalhes tr { margin-bottom: 15px; border: 3px solid #88c0d0; border-radius: 8px; background-color: #eceff4 !important; }
+    #detalhes td {
+        text-align: right !important; padding-left: 55% !important;
+        position: relative; border: none; border-bottom: 1px dotted #d8e1e8;
+        min-height: 36px; display: flex; align-items: center; justify-content: flex-end;
+    }
+    #detalhes td:not(:first-child), #detalhes td:not(:first-child) span {
+         font-family: Arial, sans-serif; font-size: 1.05rem; /* Arial Mobile */
+    }
+    #detalhes tr td:last-child { border-bottom: none; }
+    #detalhes td:first-child {
+        text-align: center !important; padding-left: 10px !important; padding-top: 10px; padding-bottom: 8px;
+        background-color: #d8dee9; color: #4c566a; font-family: 'Press Start 2P', cursive;
+        font-size: 0.8rem; border-right: none; border-bottom: 3px solid #88c0d0 !important;
+        margin-bottom: 5px; min-height: auto; display: block;
+    }
+    #detalhes td:first-child::before { content: ""; }
+    #detalhes td::before {
+        content: attr(data-label); position: absolute; left: 8px; top: 50%;
+        transform: translateY(-50%); width: 50%;
+        padding-right: 5px; white-space: nowrap; text-align: left !important;
+        font-family: 'Press Start 2P', cursive; font-size: 0.7rem; color: #5e81ac;
+    }
+}
+
+@media (max-width: 1000px) { #calc-form { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+    body { font-size: 1.2rem; } h1 { font-size: 1.5rem; }
+    #calculadora-container { padding: 20px; }
+    #calc-form { grid-template-columns: repeat(2, 1fr); }
+    input[type="number"], select { font-size: 1.25rem; padding: 10px 12px; }
+    button[type="submit"] { font-size: 0.9rem; }
+    .resumo-grid { font-size: 1.2rem; }
+}
+@media (max-width: 540px) {
+    #calc-form { grid-template-columns: 1fr; }
+    h2.section-title { font-size: 1rem; gap: 10px; }
+    #resumo-imagem-cultivo { width: 36px; height: 36px; }
+    .resumo-grid { font-size: 1.15rem; }
+    #detalhes td::before { width: 45%; font-size: 0.65rem;}
+    #detalhes td { padding-left: 50% !important; }
+}

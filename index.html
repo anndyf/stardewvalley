@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Lucro - Stardew Valley</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="dados_culturas.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>
+            <img src="https://stardewvalleywiki.com/mediawiki/images/0/00/Junimo_Plush.png" alt="Junimo">
+            Calculadora Stardew Valley
+            <img src="https://stardewvalleywiki.com/mediawiki/images/0/00/Junimo_Plush.png" alt="Stardrop">
+        </h1>
+    </header>
+
+    <main id="calculadora-container">
+        <section id="inputs">
+            <form id="calc-form">
+
+                <div class="form-group">
+                    <label for="filtro-estacao">A. Filtro Estação:</label>
+                    <select id="filtro-estacao" name="filtro-estacao">
+                        <option value="todas" selected>Todas</option>
+                        <option value="primavera">Primavera</option>
+                        <option value="verao">Verão</option>
+                        <option value="outono">Outono</option>
+                        <option value="inverno">Inverno</option>
+                        </select>
+                </div>
+                <div class="form-group">
+                    <label for="filtro-tipo">B. Filtro Tipo:</label>
+                    <select id="filtro-tipo" name="filtro-tipo">
+                        <option value="todos" selected>Todos</option>
+                        <option value="unica">Colheita Única</option>
+                        <option value="multipla">Colheita Múltipla</option>
+                    </select>
+                </div>
+                <div class="form-group"> <label for="cultivo">1. Cultivo:</label> <select id="cultivo" name="cultivo"></select> </div>
+                <div class="form-group"> <label for="quantidade">2. Quant. Plantada:</label> <input type="number" id="quantidade" name="quantidade" value="1" min="1"> </div>
+                <div class="form-group"> <label for="profissao">3. Profissão:</label> <select id="profissao" name="profissao"> <option value="nenhuma">Nenhuma</option> <option value="cultivador">Cultivador</option> <option value="artesao">Artesão</option> </select> </div>
+                <div class="form-group"> <label for="qualidade">4. Qualidade (Venda):</label> <select id="qualidade" name="qualidade"> <option value="normal">Normal</option> <option value="prata">Prata</option> <option value="ouro">Ouro</option> <option value="iridio">Irídio</option> </select> </div>
+
+                <div class="form-group"> <label for="periodo">5. Período:</label> <select id="periodo" name="periodo"> <option value="28" selected>1 Estação (28d)</option> <option value="56">2 Estações (56d)</option> <option value="84">3 Estações (84d)</option> <option value="112">1 Ano (112d)</option> </select> </div>
+                <div class="form-group" data-maquina="jarra"> <label for="maquinas_jarra">6. Jarras Conserva:</label> <input type="number" id="maquinas_jarra" name="maquinas_jarra" value="1" min="0"> </div>
+                <div class="form-group" data-maquina="barril"> <label for="maquinas_barril">7. Barris:</label> <input type="number" id="maquinas_barril" name="maquinas_barril" value="1" min="0"> </div>
+                <div class="form-group" data-maquina="desidratador"> <label for="maquinas_desidratador">8. Desidratadores:</label> <input type="number" id="maquinas_desidratador" name="maquinas_desidratador" value="1" min="0"> </div>
+
+                <div class="form-group" data-maquina="oleo"> <label for="maquinas_oleo">9. Moinhos de Óleo:</label> <input type="number" id="maquinas_oleo" name="maquinas_oleo" value="1" min="0"> </div>
+                <div class="form-group" data-maquina="apiario"> <label for="maquinas_apiario">10. Apiários:</label> <input type="number" id="maquinas_apiario" name="maquinas_apiario" value="1" min="0"> </div>
+                
+                <button type="submit">Calcular Lucro</button>
+            </form>
+        </section>
+        
+        <section id="resultados" style="display: none;">
+            <div id="resumo">
+                <h2 class="section-title">
+                    <img id="resumo-imagem-cultivo" src="" alt="Cultivo">
+                    <span id="resumo-cultivo">...</span>
+                </h2>
+                <div class="resumo-grid">
+                    <p>Total de Sementes: <strong id="total-sementes">...</strong></p>
+                    <p>Custo das Sementes (Total): <strong id="custo-total" class="negativo">...g</strong></p>
+                    
+                    <p>Custo Semente (Unitário): <strong id="custo-semente-unitario" class="negativo">...g</strong></p>
+                    <p>Preço Base Venda (Normal): <strong id="preco-base-unitario">...g</strong></p>
+                    <p>Colheitas no Período: <strong id="total-colheitas">...</strong></p>
+                    <p>Total de Frutos Obtidos: <strong id="total-frutos">...</strong></p>
+                </div>
+            </div>
+            <div id="detalhes">
+                </div>
+        </section>
+         <section class="notas-container">
+            <div class="accordion" id="notas-explicativas">
+                <button class="accordion-header" type="button" aria-expanded="false" aria-controls="notas-content-1">
+                    <img src="https://stardewvalleywiki.com/mediawiki/images/6/61/Blue_Chicken.png" alt="Info">
+                    <span>Entendendo os Cálculos</span>
+                    <span class="accordion-icon" aria-hidden="true"></span> </button>
+                <div class="accordion-content" id="notas-content-1" role="region" aria-labelledby="notas-explicativas">
+                    <ul>
+                        <li>
+                            <strong>Profissões:</strong> A profissão <strong>Cultivador (+10%)</strong> afeta apenas o preço da <strong>venda direta</strong> da colheita crua (com a qualidade selecionada). A profissão <strong>Artesão (+40%)</strong> aumenta o preço de venda da maioria dos <strong>produtos artesanais</strong> (Vinho, Geleia, Cerveja, etc.), mas não afeta a venda direta.
+                        </li>
+                        <li>
+                            <strong>Custo da Semente:</strong> Itens de <strong>Coleta</strong> (como Cogumelo Comum, Amora, Inhame de Neve, etc.) aparecem com custo <strong>0g</strong> porque suas "sementes" não são compradas em lojas, mas sim encontradas na natureza ou criadas (ex: Sementes Silvestres).
+                        </li>
+                        <li>
+                            <strong>Itens por Processo:</strong>
+                            <ul>
+                                <li><strong>Jarras de Conserva</strong> (Geleia/Picles) e <strong>Barris</strong> (Vinho/Suco/Pale Ale/etc.) usam <strong>1</strong> unidade da colheita por processo.</li>
+                                <li>O <strong>Desidratador</strong> (Fruta Ressecada/Passas) requer <strong>5</strong> unidades da colheita por processo.</li>
+                                <li><strong>Exceção:</strong> Para fazer <strong>Café</strong> no Barril, são necessários <strong>5</strong> Grãos de Café.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Moinho:</strong> O Moinho tem resultados e tempos de processamento específicos dependendo do item (ex: 1 Trigo vira 1 Farinha, 1 Beterraba vira 3 Açúcares, 1 Arroz Não Moido vira 1 Arroz Branco). A calculadora atualmente foca no processamento via Jarras, Barris, Desidratadores, etc., mas tenha em mente o potencial do Moinho.
+                        </li>
+                         <li>
+                            <strong>Mel:</strong> O valor do Mel de Flor depende da flor mais próxima do Apiário. A Rosa-de-fada produz o mel mais valioso.
+                        </li>
+                    </ul>
+                    <p>Para detalhes mais aprofundados sobre mecânicas, profissões e itens, consulte a <a href="https://pt.stardewvalleywiki.com/" target="_blank" rel="noopener noreferrer">Stardew Valley Wiki (PT)</a>.</p>
+                </div> </div> </section>
+    <footer>
+        <p>Dados baseados na <a href="https://pt.stardewvalleywiki.com/" target="_blank" rel="noopener noreferrer">Stardew Valley Wiki (PT)</a>.</p>
+        <p class="desenvolvedor">Desenvolvido por Andressa Mirella</p>
+    </footer>
+</body>
+</html>
