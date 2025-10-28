@@ -1,5 +1,3 @@
-document.addEventListener('DOMContentLoaded', () => {
-
     // --- 1. FONTE DE DADOS ---
     const PRODUTOS_ARTESANAIS_INFO = {
         'geleia_picles': { nome: 'Geleia / Conserva', tempo_min: 4000, maquina: 'jarra' },
@@ -18,63 +16,265 @@ document.addEventListener('DOMContentLoaded', () => {
         'mel_de_flor': { nome: 'Mel', tempo_min: 4320, maquina: 'apiario' }
     };
     const MULTIPLICADOR_QUALIDADE = { 'normal': 1.0, 'prata': 1.25, 'ouro': 1.5, 'iridio': 2.0 };
-
-    // --- 2. ELEMENTOS DO DOM (COM FILTROS) ---
-    const form = document.getElementById('calc-form');
-    // NOVOS ELEMENTOS DE FILTRO
-    const selectEstacao = document.getElementById('filtro-estacao');
-    const selectTipo = document.getElementById('filtro-tipo');
-    // FIM DOS NOVOS ELEMENTOS
-    const selectCultivo = document.getElementById('cultivo');
-    const resultadosContainer = document.getElementById('resultados');
-    const resumoCultivo = document.getElementById('resumo-cultivo');
-    const totalSementesEl = document.getElementById('total-sementes');
-    const custoTotalEl = document.getElementById('custo-total');
-    const totalColheitasEl = document.getElementById('total-colheitas');
-    const totalFrutosEl = document.getElementById('total-frutos');
-    const detalhesContainer = document.getElementById('detalhes');
-    const selectPeriodo = document.getElementById('periodo');
-    const maquinaFormGroups = document.querySelectorAll('.form-group[data-maquina]');
-    const custoSementeUnitarioEl = document.getElementById('custo-semente-unitario');
-    const precoBaseUnitarioEl = document.getElementById('preco-base-unitario');
-    const resumoImagemCultivoEl = document.getElementById('resumo-imagem-cultivo');
-
-
-    // --- 3. LÓGICA DE INICIALIZAÇÃO (COM FILTROS) ---
     
-    // --- FUNÇÃO POPULARCULTIVOS ATUALIZADA ---
-    function popularCultivos() {
+let selectEstacao, selectTipo, selectCultivo, resultadosContainer, maquinaFormGroups;
+/**
+ * Aplica o idioma selecionado a todos os elementos marcados e atualiza a interface.
+ * @param {string} lang - O código do idioma a ser aplicado (ex: 'pt', 'en', 'es').
+ */
+function setLanguage(lang) {
+    if (typeof translations === 'undefined') { /*...*/ return; }
+    if (!translations[lang]) { /*...*/ lang = 'pt'; }
+
+    // Traduz elementos estáticos
+    document.querySelectorAll('[data-translate-key]').forEach(element => {
+        const key = element.getAttribute('data-translate-key');
+        if (translations[lang][key] !== undefined) {
+            element.innerHTML = translations[lang][key];
+        } else if (translations['pt'][key] !== undefined) {
+            element.innerHTML = translations['pt'][key];
+            console.warn(`Translation key "${key}" not found for language "${lang}". Used 'pt'.`);
+        } else {
+            console.error(`Translation key "${key}" not found in any language.`);
+        }
+    });
+
+    // Guarda preferência e atualiza HTML lang attribute
+    localStorage.setItem('preferredLanguage', lang);
+    document.documentElement.lang = lang;
+
+    // Atualiza textos dinâmicos (options dos selects)
+    updateDynamicTexts(lang);
+
+    // Atualiza cabeçalhos da tabela (se visível)
+    if (document.getElementById('resultados')?.style.display === 'block') {
+         updateTableHeaders(lang);
+    }
+
+    // Atualiza placeholder do dropdown de cultivos
+    updateCropDropdownPlaceholder(lang);
+
+    // --- ADICIONADO: Gerencia a classe 'active' nos botões de idioma ---
+    const btnPt = document.getElementById('lang-pt'); // Busca os botões aqui
+    const btnEn = document.getElementById('lang-en');
+    const btnEs = document.getElementById('lang-es');
+
+    // Remove 'active' de todos os botões encontrados
+    if (btnPt) btnPt.classList.remove('active');
+    if (btnEn) btnEn.classList.remove('active');
+    if (btnEs) btnEs.classList.remove('active');
+
+    // Adiciona 'active' apenas ao botão correto (se ele foi encontrado)
+    if (lang === 'pt' && btnPt) btnPt.classList.add('active');
+    if (lang === 'en' && btnEn) btnEn.classList.add('active');
+    if (lang === 'es' && btnEs) btnEs.classList.add('active');
+    // --- FIM DA ADIÇÃO ---
+
+    // Repopula o dropdown de CULTIVOS com os nomes traduzidos
+    // (A chamada a popularCultivos() deve vir DEPOIS de definir document.documentElement.lang)
+    popularCultivos();
+}
+
+function updateDynamicTexts(lang) {
+     // 1. VERIFICAR SE translations EXISTE E PEGAR langData
+     if (typeof translations === 'undefined') {
+         console.error("updateDynamicTexts: translations object not found.");
+         return;
+     }
+     const langData = translations[lang] || translations['pt']; // Usa 'pt' como fallback
+
+     // --- TRADUZIR OPÇÕES DOS SELECTS ---
+     // Mapeamento: ID do Select -> Prefixo da Chave de Tradução
+     const selectsToTranslate = {
+         'filtro-estacao': 'season',
+         'filtro-tipo': 'type',
+         'profissao': 'profession',
+         'qualidade': 'quality',
+         'periodo': 'period'
+     };
+
+     // Mapeamento: Valor da Opção ('value' do HTML) -> Sufixo para montar a Chave de Tradução
+     const optionValueToKeySuffix = {
+         // Estação
+         'todas': 'All', 'primavera': 'Spring', 'verao': 'Summer', 'outono': 'Fall', 'inverno': 'Winter',
+         // Tipo
+         'todos': 'All', 'unica': 'Single', 'multipla': 'Multiple',
+         // Profissão
+         'nenhuma': 'None', 'cultivador': 'Tiller', 'artesao': 'Artisan',
+         // Qualidade
+         'normal': 'Normal', 'prata': 'Silver', 'ouro': 'Gold', 'iridio': 'Iridium',
+         // Período
+         '28': '28d', '56': '56d', '84': '84d', '112': '112d'
+     };
+
+     // 2. ITERAR PELOS SELECTS A SEREM TRADUZIDOS
+     for (const selectId in selectsToTranslate) {
+         const selectElement = document.getElementById(selectId);
+         if (selectElement) {
+             const keyPrefix = selectsToTranslate[selectId]; // Ex: 'season', 'type'
+
+             // 3. ITERAR PELAS OPÇÕES (<option>) DENTRO DO SELECT ATUAL
+             for (let i = 0; i < selectElement.options.length; i++) {
+                 const option = selectElement.options[i];
+                 const optionValue = option.value; // Ex: 'primavera', 'unica', 'nenhuma', '28'
+                 let translationKey = '';
+
+                 // 4. MONTAR A CHAVE DE TRADUÇÃO COMPLETA
+                 const keySuffix = optionValueToKeySuffix[optionValue]; // Ex: 'Spring', 'Single', 'None', '28d'
+
+                 if (keySuffix) {
+                     // Caso especial para período (chave já formatada: period28d)
+                     if (keyPrefix === 'period') {
+                          translationKey = keyPrefix + keySuffix; // ex: period28d
+                     } else {
+                          // Monta a chave capitalizando o sufixo: season + Spring -> seasonSpring
+                          const capitalizedSuffix = keySuffix.charAt(0).toUpperCase() + keySuffix.slice(1).toLowerCase(); // Garante formato como 'Single', 'Multiple'
+                          translationKey = keyPrefix + capitalizedSuffix; // ex: seasonSpring, typeSingle
+                     }
+                 } else {
+                     // Se o valor da opção não estiver no mapeamento, pula para a próxima
+                     // console.warn(`No key suffix mapping found for option value: ${optionValue} in select ${selectId}`);
+                     continue;
+                 }
+
+                 // 5. BUSCAR A TRADUÇÃO E ATUALIZAR O TEXTO DA OPÇÃO
+                 if (translationKey && langData[translationKey] !== undefined) {
+                     // Se a chave existe e tem tradução no idioma atual, usa a tradução
+                     option.textContent = langData[translationKey];
+                 } else if (translationKey && translations['pt'][translationKey] !== undefined) {
+                     // Fallback: Se não encontrou no idioma atual, tenta usar a tradução em Português
+                     option.textContent = translations['pt'][translationKey];
+                     console.warn(`Translation for key '${translationKey}' not found in lang '${lang}'. Using 'pt' fallback.`);
+                 } else {
+                     // Fallback final: Se não encontrou nem em 'pt', mantém o texto original ou loga um erro
+                     console.error(`Translation key '${translationKey}' not found for option value '${optionValue}' in select '${selectId}' for any language.`);
+                     // Mantém o texto que já estava na opção (geralmente o texto do HTML original)
+                 }
+             } // Fim loop options
+         } else {
+              console.warn(`Select element with ID "${selectId}" not found during translation.`);
+         }
+     } // Fim loop selectsToTranslate
+     // --- FIM TRADUÇÃO OPÇÕES ---
+
+     // Atualiza placeholder do select de cultivo (essa parte deve estar funcionando)
+     updateCropDropdownPlaceholder(lang);
+}
+
+
+/**
+ * Determina o idioma inicial a ser usado (salvo > navegador > padrão).
+ * @returns {string} O código do idioma inicial ('pt', 'en', ou 'es').
+ */
+function getInitialLanguage() {
+    // Fallback inicial se translations não carregou
+    if (typeof translations === 'undefined') return 'pt';
+
+    // 1. Verifica se já tem um idioma salvo no localStorage
+    const savedLang = localStorage.getItem('preferredLanguage');
+    if (savedLang && translations[savedLang]) {
+        return savedLang;
+    }
+    // 2. Tenta detectar pelo navegador (pega só a parte principal, ex: 'pt' de 'pt-BR')
+    const browserLang = navigator.language.split('-')[0];
+    if (translations[browserLang]) {
+        return browserLang;
+    }
+    // 3. Usa o padrão ('pt')
+    return 'pt';
+}
+
+
+
+/**
+ * Atualiza o texto do placeholder no dropdown de cultivos se ele estiver vazio.
+ * @param {string} lang - O código do idioma atual.
+ */
+function updateCropDropdownPlaceholder(lang) {
+    if (typeof translations === 'undefined') return;
+    const langData = translations[lang] || translations['pt'];
+    const selectCultivo = document.getElementById('cultivo');
+    // Verifica se o select existe, tem apenas uma opção, e essa opção está desabilitada
+    if (selectCultivo && selectCultivo.options.length === 1 && selectCultivo.options[0].disabled) {
+        // Usa a chave 'noCropFound' que adicionamos ao translations.js
+        selectCultivo.options[0].textContent = langData['noCropFound'] || 'Nenhum cultivo encontrado';
+    }
+}
+
+/**
+ * Atualiza os textos dos labels das métricas na tabela de resultados.
+ * @param {string} lang - O código do idioma atual.
+ */
+function updateTableHeaders(lang) {
+     if (typeof translations === 'undefined') return;
+     const langData = translations[lang] || translations['pt'];
+     const table = document.querySelector('#detalhes table');
+     if (!table) return; // Sai se a tabela não existe (resultados não foram calculados ainda)
+
+     // Atualiza o cabeçalho "Métrica"
+     const metricHeaderCell = table.querySelector('thead th:first-child');
+     if (metricHeaderCell) {
+         // Usa a chave 'metricHeader' que adicionamos ao translations.js
+         metricHeaderCell.textContent = langData['metricHeader'] || 'Métrica';
+     }
+
+     // Atualiza os labels das linhas (primeira célula de cada linha do tbody)
+     const metricRows = table.querySelectorAll('tbody tr');
+
+     metricRows.forEach(row => {
+         const labelCell = row.querySelector('td:first-child');
+         // Usa a chave guardada no dataset (adicionada em atualizarUI)
+         const key = labelCell.dataset.translateKey;
+
+         // Se encontrou a chave, traduz para o idioma atual
+         if (key && langData[key]) {
+             labelCell.textContent = langData[key];
+         } else if (key && translations['pt'][key]) {
+             // Fallback para português se não achar no idioma atual mas achar em pt
+             labelCell.textContent = translations['pt'][key];
+             console.warn(`Metric label key "${key}" translated using fallback 'pt'.`);
+         } else if (key) {
+             // Fallback se a chave não existir em lugar nenhum
+             labelCell.textContent = key; // Mostra a chave como último recurso
+             console.error(`Metric label key "${key}" not found in any language.`);
+         }
+     });
+}
+
+// --- FIM FUNÇÕES DE TRADUÇÃO ---
+function popularCultivos() {
         // 1. Validar dados
         if (typeof DADOS_CULTURAS === 'undefined' || Object.keys(DADOS_CULTURAS).length === 0) {
              console.error("DADOS_CULTURAS não foi definido ou está vazio.");
+             // Consider adding translated alert messages in translations.js
              alert("Erro fatal: Arquivo 'dados_culturas.js' não foi carregado ou está vazio.");
              return false;
         }
 
-        // 2. Obter valores dos filtros
+        // 2. Obter valores dos filtros e idioma atual
         const estacaoSelecionada = selectEstacao.value;
         const tipoSelecionado = selectTipo.value;
+        const currentLang = document.documentElement.lang || 'pt'; // Pega idioma atual do HTML
 
-        // 3. Filtrar os cultivos
+        // 3. Filtrar os cultivos (lógica inalterada)
         const cultivosFiltrados = Object.entries(DADOS_CULTURAS).filter(([, cultura]) => {
-            // Filtro de Estação
-            const estacaoOk = (estacaoSelecionada === 'todas') || 
+            const estacaoOk = (estacaoSelecionada === 'todas') ||
                               (cultura.estacoes && cultura.estacoes.includes(estacaoSelecionada));
             if (!estacaoOk) return false;
-
-            // Filtro de Tipo (Única vs. Múltipla)
-            // tempo_renovacao: 0 = única, > 0 = múltipla
             const tipoOk = (tipoSelecionado === 'todos') ||
                            (tipoSelecionado === 'unica' && cultura.tempo_renovacao === 0) ||
                            (tipoSelecionado === 'multipla' && cultura.tempo_renovacao > 0);
             if (!tipoOk) return false;
-            
-            return true; // Passou em ambos os filtros
+            return true;
         });
 
-        // 4. Ordenar os cultivos filtrados
+        // 4. Ordenar os cultivos filtrados USANDO O NOME TRADUZIDO
         const cultivosOrdenados = cultivosFiltrados.sort(([, a], [, b]) => {
-            return a.nome.localeCompare(b.nome);
+            // Pega o nome no idioma atual, com fallback para 'pt' e depois string vazia
+            const nomeA = a.nomes?.[currentLang] || a.nomes?.['pt'] || '';
+            const nomeB = b.nomes?.[currentLang] || b.nomes?.['pt'] || '';
+            // Usa localeCompare para ordenação alfabética correta
+            return nomeA.localeCompare(nomeB, currentLang); // Adiciona locale para melhor ordenação
         });
 
         // 5. Limpar e popular o select de cultivos
@@ -83,29 +283,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cultivosOrdenados.length === 0) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'Nenhum cultivo encontrado';
+            // Usa a tradução para o placeholder "Nenhum cultivo encontrado"
+            option.textContent = (typeof translations !== 'undefined' ? translations[currentLang]?.noCropFound || translations['pt'].noCropFound : 'Nenhum cultivo encontrado');
             option.disabled = true;
             selectCultivo.appendChild(option);
         } else {
             for (const [id, cultura] of cultivosOrdenados) {
                 const option = document.createElement('option');
                 option.value = id;
-                option.textContent = cultura.nome;
+                // --- MODIFICADO AQUI: Usa o nome traduzido do objeto nomes ---
+                // Pega o nome no idioma atual, com fallback para 'pt', depois para o 'id' do cultivo
+                option.textContent = cultura.nomes?.[currentLang] || cultura.nomes?.['pt'] || id;
+                // --- FIM DA MODIFICAÇÃO ---
                 selectCultivo.appendChild(option);
             }
         }
 
         // 6. Atualizar a UI (máquinas e resultados)
-        // Isso garante que as máquinas corretas sejam exibidas para o primeiro item da lista filtrada
-        // e que resultados antigos sejam ocultados.
-        atualizarVisibilidadeMaquinas(); 
+        atualizarVisibilidadeMaquinas();
         resultadosContainer.style.display = 'none';
+
+        // Garante que o placeholder seja atualizado mesmo após repopular
+        updateCropDropdownPlaceholder(currentLang);
 
         return true;
     }
-    // --- FIM DA FUNÇÃO POPULARCULTIVOS ---
-
-    function atualizarVisibilidadeMaquinas() {
+function atualizarVisibilidadeMaquinas() {
         const cultivoId = selectCultivo.value;
         // SE NÃO HOUVER CULTIVO (FILTRO VAZIO), ESCONDE TUDO
         if (!cultivoId || !DADOS_CULTURAS[cultivoId]) {
@@ -134,6 +337,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
      }
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    selectEstacao = document.getElementById('filtro-estacao');
+    selectTipo = document.getElementById('filtro-tipo');
+    selectCultivo = document.getElementById('cultivo');
+    resultadosContainer = document.getElementById('resultados');
+    maquinaFormGroups = document.querySelectorAll('.form-group[data-maquina]');
+    
+    const form = document.getElementById('calc-form');
+    const resumoCultivo = document.getElementById('resumo-cultivo');
+    const totalSementesEl = document.getElementById('total-sementes');
+    const custoTotalEl = document.getElementById('custo-total');
+    const totalColheitasEl = document.getElementById('total-colheitas');
+    const totalFrutosEl = document.getElementById('total-frutos');
+    const detalhesContainer = document.getElementById('detalhes');
+    const selectPeriodo = document.getElementById('periodo');
+    const custoSementeUnitarioEl = document.getElementById('custo-semente-unitario');
+    const precoBaseUnitarioEl = document.getElementById('preco-base-unitario');
+    const resumoImagemCultivoEl = document.getElementById('resumo-imagem-cultivo');
+        // --- FIM ATRIBUIÇÃO DOM ---
+    
+    
 
 // --- 4. LÓGICA DE CÁLCULO (AJUSTADA para TOTAIS DA ESTAÇÃO na Tabela) ---
     function calcularLucro(event) {
@@ -330,44 +558,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
      }
     function getNomeCabecalho(tipoId, dados) {
-         const nomes = {
-            'direta': `Venda (${dados.qualidade || 'normal'})`,
-            'direta_e_mel': `Venda (${dados.qualidade || 'normal'}) + Mel`,
-            'geleia_picles': 'Jarra',
-            'vinho': 'Vinho',
-            'suco': 'Suco',
-            'fruta_ressecada': 'Desidratador',
-            'oleo': 'Óleo',
-            'pale_ale': 'Pale Ale',
-            'cerveja': 'Cerveja',
-            'cafe': 'Café',
-            'cha_verde': 'Chá',
-            'hidromel': 'Hidromel',
-            'vinagre': 'Vinagre',
-            'passas': 'Passas',
-            'mel_de_flor': 'Mel',
-            'arroz': 'Arroz'
+        // Objeto que mapeia o tipoId (a chave interna dos dados)
+        // para uma chave de tradução base (sem qualidade)
+        const typeIdToTranslationKey = {
+            'direta': 'sell',
+            'direta_e_mel': 'sellPlusHoney',
+            'geleia_picles': 'jar',
+            'vinho': 'wine',
+            'suco': 'juice',
+            'fruta_ressecada': 'dehydrator',
+            'oleo': 'oil',
+            'pale_ale': 'paleAle',
+            'cerveja': 'beer',
+            'cafe': 'coffee',
+            'cha_verde': 'tea',
+            'hidromel': 'mead',
+            'vinagre': 'vinegar',
+            'passas': 'raisins',
+            'mel_de_flor': 'honey',
+            'arroz': 'rice'
+            // Adicione mais mapeamentos se criar novos tipos de processamento
         };
-        return nomes[tipoId] || (dados && dados.nome) || tipoId;
-     }
 
-// --- 5. ATUALIZAÇÃO DA INTERFACE (AJUSTADA para TOTAIS DA ESTAÇÃO na Tabela) ---
+        // Retorna a chave de tradução mapeada.
+        // Se não encontrar no mapeamento, retorna o próprio tipoId como fallback.
+        // A lógica para adicionar a qualidade (ex: "(ouro)") foi movida para dentro de 'atualizarUI'.
+        return typeIdToTranslationKey[tipoId] || tipoId;
+     }
+// --- 5. ATUALIZAÇÃO DA INTERFACE (AJUSTADA para TOTAIS DA ESTAÇÃO na Tabela e NOME TRADUZIDO) ---
     function atualizarUI(cultura, inputs, custoRealEstacao, colheitasEstacao, totalFrutosEstacao, resultados, diasCalculo) {
         resultadosContainer.style.display = 'block';
+        const currentLang = document.documentElement.lang || 'pt'; // Pega idioma atual
 
         // --- ATUALIZA RESUMO ---
-        resumoCultivo.textContent = `${inputs.quantidade}x ${cultura.nome} (${diasCalculo} dias)`;
+        // --- MODIFICADO AQUI: Usa nome traduzido no resumo ---
+        const nomeCultivoTraduzido = cultura.nomes?.[currentLang] || cultura.nomes?.['pt'] || cultura.nome; // Usa .nome antigo como último fallback
+        resumoCultivo.textContent = `${inputs.quantidade}x ${nomeCultivoTraduzido} (${diasCalculo} dias)`;
+        // --- FIM DA MODIFICAÇÃO ---
+
         totalSementesEl.textContent = formatarNumero(inputs.quantidade);
         custoTotalEl.textContent = `${formatarNumero(custoRealEstacao)}g`; // Mostra Custo REAL da estação
         custoSementeUnitarioEl.textContent = `${formatarNumero(cultura.custo_semente)}g`;
         precoBaseUnitarioEl.textContent = `${formatarNumero(cultura.preco_base)}g`;
-        totalColheitasEl.textContent = `${formatarNumero(colheitasEstacao)} (colheitas)`;
-        // Total de Frutos no resumo agora sempre mostra o total da estação
+        totalColheitasEl.textContent = `${formatarNumero(colheitasEstacao)} (colheitas)`; // Texto '(colheitas)' pode precisar de tradução
         totalFrutosEl.textContent = formatarNumero(totalFrutosEstacao);
 
         const imagemUrl = cultura.imagem_url || '';
         resumoImagemCultivoEl.src = imagemUrl;
-        resumoImagemCultivoEl.alt = cultura.nome;
+        // --- MODIFICADO AQUI: Usa nome traduzido no alt da imagem ---
+        resumoImagemCultivoEl.alt = nomeCultivoTraduzido;
+        // --- FIM DA MODIFICAÇÃO ---
         resumoImagemCultivoEl.style.display = imagemUrl ? 'inline-block' : 'none';
 
         // --- CRIA TABELA ---
@@ -385,138 +625,131 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultadosOrdenados = Object.entries(resultados).sort(([, a], [, b]) => b.lucroDia - a.lucroDia);
         const headerRow = document.createElement('tr');
         const thMetrica = document.createElement('th');
-        thMetrica.textContent = 'Métrica';
+        // Traduz o cabeçalho "Métrica"
+        thMetrica.textContent = (typeof translations !== 'undefined' ? translations[currentLang]?.metricHeader || translations['pt'].metricHeader : 'Métrica');
         headerRow.appendChild(thMetrica);
 
         const colHeaders = [];
 
         resultadosOrdenados.forEach(([tipoId, dados]) => {
             const thMetodo = document.createElement('th');
-            const nomeCabecalho = getNomeCabecalho(tipoId, dados);
-            thMetodo.textContent = nomeCabecalho;
+            const currentLang = document.documentElement.lang || 'pt'; // Pega idioma atual
+
+            // --- TRADUÇÃO DO CABEÇALHO DO MÉTODO ---
+            // 1. Obter a chave de tradução BASE (ex: 'sell', 'jar', 'wine')
+            const chaveCabecalhoBase = getNomeCabecalho(tipoId, dados);
+            let nomeCabecalhoFinal = chaveCabecalhoBase; // Fallback inicial
+
+            // 2. Buscar a tradução da chave BASE
+            const traducaoBase = (typeof translations !== 'undefined' ? translations[currentLang]?.[chaveCabecalhoBase] || translations['pt'][chaveCabecalhoBase] : chaveCabecalhoBase) || chaveCabecalhoBase;
+
+            // 3. Se for Venda Direta, adicionar a qualidade traduzida
+            if (tipoId === 'direta' || tipoId === 'direta_e_mel') {
+                // Monta a chave da qualidade (ex: qualityNormal, qualitySilver)
+                const qualidadeValue = dados.qualidade || 'normal'; // Garante um valor padrão
+                const qualidadeKey = `quality${qualidadeValue.charAt(0).toUpperCase() + qualidadeValue.slice(1)}`;
+                // Busca a tradução da qualidade
+                const qualidadeTraduzida = (typeof translations !== 'undefined' ? translations[currentLang]?.[qualidadeKey] || translations['pt'][qualidadeKey] : qualidadeValue) || qualidadeValue;
+                // Combina a tradução base com a qualidade traduzida
+                nomeCabecalhoFinal = `${traducaoBase} (${qualidadeTraduzida})`;
+            } else {
+                // Para outros métodos, usa apenas a tradução base
+                nomeCabecalhoFinal = traducaoBase;
+            }
+
+            thMetodo.textContent = nomeCabecalhoFinal; // Define o texto do <th>
+            // --- FIM TRADUÇÃO CABEÇALHO ---
+
             thMetodo.classList.add(`th-${tipoId}`);
             headerRow.appendChild(thMetodo);
-            colHeaders.push(nomeCabecalho);
+            colHeaders.push(nomeCabecalhoFinal); // Usa nome final (traduzido com qualidade) para data-label
         });
         thead.appendChild(headerRow);
 
-        // --- NOMES DAS MÉTRICAS ATUALIZADOS ---
+        // --- MÉTRICAS COM LABELKEY ---
         const metricas = [
-            { key: 'totalProdutos', label: 'Rendimento (Estação)' },
-            { key: 'receitaTotal', label: 'Receita (Estação)' },
-            { key: 'custoTotal', label: 'Custo (Estação)', classe_tr: 'cost-row'}, // Custo total da estação
-            { key: 'lucro', label: 'Lucro (Estação)', classe_tr: 'profit-row'},    // Lucro total da estação
-            { key: 'lucroDia', label: 'Lucro por Dia' },    // Média diária
-            { key: 'tempoItem', label: 'Tempo por Item' },
-            { key: 'tempoTotal', label: 'Tempo Total'}, // Tempo para processar TUDO
-            { key: 'itensConsumidos', label: 'Itens p/ Processo' }
+            { key: 'totalProdutos', labelKey: 'metricYield' },
+            { key: 'receitaTotal', labelKey: 'metricRevenue' },
+            { key: 'custoTotal', labelKey: 'metricCost', classe_tr: 'cost-row'},
+            { key: 'lucro', labelKey: 'metricProfit', classe_tr: 'profit-row'},
+            { key: 'lucroDia', labelKey: 'metricProfitPerDay' },
+            { key: 'tempoItem', labelKey: 'metricTimePerItem' },
+            { key: 'tempoTotal', labelKey: 'metricTimeTotal'}, // Corrigido: Removido 'Estação' do labelKey
+            { key: 'itensConsumidos', labelKey: 'metricItemsPerProcess' }
         ];
 
         metricas.forEach(metrica => {
-            // Lógica para exibir a linha (simplificada, pois a maioria dos valores deve existir agora)
-             let temMetrica = resultadosOrdenados.some(([, dados]) => {
-                const valor = dados[metrica.key];
-                // Itens p/ Processo só mostra se for > 1 em algum método
-                if (metrica.key === 'itensConsumidos') return dados.itensConsumidos && dados.itensConsumidos > 1;
-                 // Tempo por item só mostra se for > 0 em algum método
-                if (metrica.key === 'tempoItem') return dados.tempoItem !== null && dados.tempoItem > 0;
-                 // Rendimento não mostra para Mel Puro
-                if (metrica.key === 'totalProdutos' && dados.nome === 'Apenas Mel') return false;
-                 // Custo não mostra para Mel Puro
-                 if (metrica.key === 'custoTotal' && dados.nome === 'Apenas Mel') return false;
-                 // Tempo Total não mostra para Venda e Mel Puro
-                if (metrica.key === 'tempoTotal' && (dados.nome === 'Venda Direta' || dados.nome === 'Venda Direta + Mel' || dados.nome === 'Apenas Mel')) return false;
+            // --- LÓGICA SIMPLIFICADA para exibir a linha ---
+            let temMetrica = true; // Assume que a linha deve ser exibida por padrão
 
-                // Para as outras métricas, verifica se o valor não é null/undefined
-                return valor !== null && typeof valor !== 'undefined';
-            });
+            // Condições específicas para ESCONDER a linha INTEIRA:
+            if (metrica.key === 'itensConsumidos') {
+                // Esconde a linha "Itens p/ Processo" se NENHUM método usar mais de 1 item
+                temMetrica = resultadosOrdenados.some(([, dados]) => dados.itensConsumidos && dados.itensConsumidos > 1);
+            }
+            // (Você pode adicionar outros 'else if' aqui se houver mais linhas que precisam ser condicionalmente ocultadas)
+
+            // --- FIM DA LÓGICA SIMPLIFICADA ---
 
             if (temMetrica) {
                 const row = document.createElement('tr');
-                if (metrica.classe_tr) {
-                    row.classList.add(metrica.classe_tr);
-                }
+                // ... (o resto do código para criar a linha e as células continua como estava) ...
+                if (metrica.classe_tr) { row.classList.add(metrica.classe_tr); }
                 const tdLabel = document.createElement('td');
-                tdLabel.textContent = metrica.label;
+
+                // --- USA TRADUÇÃO DO LABEL ---
+                const currentLang = document.documentElement.lang || 'pt';
+                tdLabel.textContent = (typeof translations !== 'undefined' ? translations[currentLang]?.[metrica.labelKey] || translations['pt'][metrica.labelKey] : metrica.labelKey);
+                tdLabel.dataset.translateKey = metrica.labelKey;
+                // --- FIM AJUSTE ---
                 row.appendChild(tdLabel);
 
+                // --- Loop interno para preencher os valores (TDs) ---
                 resultadosOrdenados.forEach(([tipoId, dados], index) => {
+                    // ... (TODA a lógica interna para formatar 'conteudoFormatado'
+                    //      incluindo 'Insuficiente' e N/A, permanece EXATAMENTE como estava antes) ...
                     const tdValor = document.createElement('td');
-                    tdValor.setAttribute('data-label', colHeaders[index]); // Adiciona o data-label
+                    tdValor.setAttribute('data-label', colHeaders[index]);
                     let valor = dados[metrica.key];
                     let conteudoFormatado = '';
-                    const INDICADOR_INSUFICIENTE = "Insuficiente";
+                    const INDICADOR_INSUFICIENTE = (typeof translations !== 'undefined' ? translations[currentLang]?.insufficient || translations['pt'].insufficient : "Insuficiente");
                     const isDirectSale = tipoId === 'direta' || tipoId === 'direta_e_mel';
                     const isPureHoney = tipoId === 'mel_de_flor';
                     const isProcessingMetricPotentiallyNull = ['totalProdutos', 'receitaTotal', 'lucro', 'tempoTotal'].includes(metrica.key);
 
-
-                    // --- LÓGICA DE EXIBIÇÃO CORRIGIDA ---
-
-                    // 1. Verifica caso específico de "Insuficiente"
-                    // (Valor é null, é métrica de processamento, requer >1 item, E NÃO é venda direta)
-                    if (valor === null && isProcessingMetricPotentiallyNull && dados.itensConsumidos > 1 && !isDirectSale) {
-                        conteudoFormatado = `<span class="insuficiente-nota">${INDICADOR_INSUFICIENTE}</span>`;
-                    }
-                    // 2. Trata outros casos onde '-' é esperado (mesmo se valor for null ou 0)
-                    else if ((metrica.key === 'tempoTotal' || metrica.key === 'tempoItem') && isDirectSale) {
-                         conteudoFormatado = '-'; // Tempo não aplicável à venda
-                    } else if (metrica.key === 'tempoTotal' && isPureHoney) {
-                         conteudoFormatado = '-'; // Tempo Total não aplicável a Mel Puro isolado (usa o texto ~4dias)
-                         if (dados.tempoTotal) { // A menos que tenhamos um texto específico como "~4 dias/colheita"
-                              conteudoFormatado = `<span class="tempo-total">${dados.tempoTotal}</span>`;
-                         }
-                    } else if (metrica.key === 'custoTotal' && isPureHoney) {
-                         conteudoFormatado = '-'; // Custo não aplicável a Mel Puro isolado
-                    } else if (metrica.key === 'totalProdutos' && isPureHoney) {
-                         // Mostra o total de mel se o valor existir
-                         conteudoFormatado = (valor !== null && typeof valor !== 'undefined') ? formatarNumero(valor) : '-';
-                    } else if (metrica.key === 'totalProdutos' && tipoId === 'direta_e_mel') {
-                         // Mostra o total de frutos para Venda+Mel
-                          conteudoFormatado = (totalFrutosEstacao !== null && typeof totalFrutosEstacao !== 'undefined') ? formatarNumero(totalFrutosEstacao) : '-';
-                    }
-                    // 3. Formata valores válidos (não nulos/undefined) para os casos restantes
+                    // Lógica de Exibição (Inalterada)
+                    if (valor === null && isProcessingMetricPotentiallyNull && dados.itensConsumidos > 1 && !isDirectSale) { conteudoFormatado = `<span class="insuficiente-nota">${INDICADOR_INSUFICIENTE}</span>`; }
+                    else if ((metrica.key === 'tempoTotal' || metrica.key === 'tempoItem') && isDirectSale) { conteudoFormatado = '-'; }
+                    else if (metrica.key === 'tempoTotal' && isPureHoney) { conteudoFormatado = dados.tempoTotal ? `<span class="tempo-total">${dados.tempoTotal}</span>` : '-'; }
+                    else if (metrica.key === 'custoTotal' && isPureHoney) { conteudoFormatado = '-'; }
+                    else if (metrica.key === 'totalProdutos' && isPureHoney) { conteudoFormatado = (valor !== null && typeof valor !== 'undefined') ? formatarNumero(valor) : '-'; }
+                    else if (metrica.key === 'totalProdutos' && tipoId === 'direta_e_mel') { conteudoFormatado = (totalFrutosEstacao !== null && typeof totalFrutosEstacao !== 'undefined') ? formatarNumero(totalFrutosEstacao) : '-'; }
                     else if (valor !== null && typeof valor !== 'undefined') {
-                        if (metrica.key === 'totalProdutos') {
-                             conteudoFormatado = formatarNumero(valor);
-                        } else if (metrica.key === 'receitaTotal' || metrica.key === 'custoTotal' || metrica.key === 'lucro') {
-                            conteudoFormatado = `${formatarNumero(valor)}g`;
-                        } else if (metrica.key === 'lucroDia') {
-                            conteudoFormatado = `${formatarNumero(dados.lucroDia, 2)}g`;
-                        } else if (metrica.key === 'tempoItem') {
-                             // Mostra "Instantâneo" se tempo for 0, senão formata
-                            conteudoFormatado = (valor >= 0) ? `<span class="tempo-item">${formatarTempoIndividual(valor)}</span>` : '-';
-                        } else if (metrica.key === 'tempoTotal') {
-                              // Se chegou aqui, é um tempo de processamento válido
-                              conteudoFormatado = `<span class="tempo-total">${valor || 'N/A'}</span>`;
-                        } else if (metrica.key === 'itensConsumidos') {
-                             conteudoFormatado = (valor > 1) ? `<span class="input-note-table">${valor}</span>` : '-';
-                        } else {
-                            conteudoFormatado = valor; // Caso genérico
-                        }
+                        // Formatação dos valores (Inalterada)
+                        if (metrica.key === 'totalProdutos') { conteudoFormatado = formatarNumero(valor); }
+                        else if (['receitaTotal', 'custoTotal', 'lucro'].includes(metrica.key)) { conteudoFormatado = `${formatarNumero(valor)}g`; }
+                        else if (metrica.key === 'lucroDia') { conteudoFormatado = `${formatarNumero(dados.lucroDia, 2)}g`; }
+                        else if (metrica.key === 'tempoItem') { conteudoFormatado = (valor >= 0) ? `<span class="tempo-item">${formatarTempoIndividual(valor)}</span>` : '-'; }
+                        else if (metrica.key === 'tempoTotal') { conteudoFormatado = `<span class="tempo-total">${valor || 'N/A'}</span>`; }
+                        else if (metrica.key === 'itensConsumidos') { conteudoFormatado = (valor > 1) ? `<span class="input-note-table">${valor}</span>` : '-'; }
+                        else { conteudoFormatado = valor; }
                     }
-                    // 4. Fallback final para qualquer outro null/undefined
-                    else {
-                         conteudoFormatado = '-';
-                    }
-                    // --- FIM LÓGICA DE EXIBIÇÃO ---
+                    else { conteudoFormatado = '-'; }
 
+                    // Aplica classes de lucro/negativo ou insere o HTML formatado (Inalterado)
+                    if (conteudoFormatado.includes('insuficiente-nota')) { tdValor.innerHTML = conteudoFormatado; }
+                    else if (metrica.key === 'lucro' && valor !== null) { tdValor.innerHTML = `<span class="${valor >= 0 ? 'lucro-positivo' : 'lucro-negativo'}">${conteudoFormatado}</span>`; }
+                    else { tdValor.innerHTML = conteudoFormatado; }
 
-                    // Aplica classes de lucro/negativo ou insere o HTML formatado
-                    if (conteudoFormatado.includes('insuficiente-nota')) {
-                        tdValor.innerHTML = conteudoFormatado;
-                    } else if (metrica.key === 'lucro' && valor !== null) { // Só aplica classe se valor não for null
-                        tdValor.innerHTML = `<span class="${valor >= 0 ? 'lucro-positivo' : 'lucro-negativo'}">${conteudoFormatado}</span>`;
-                    } else {
-                         tdValor.innerHTML = conteudoFormatado;
-                     }
                     row.appendChild(tdValor);
-                }); // Fim
+                }); // --- Fim loop interno ---
                 tbody.appendChild(row);
-            }
+            } // --- Fim if(temMetrica) ---
         });
 
         tableContainer.appendChild(table);
+        // Garante que os cabeçalhos sejam atualizados se a tabela foi recriada
+        updateTableHeaders(currentLang);
     }
 
     // --- 6. INICIALIZAÇÃO (COM FILTROS) ---
@@ -537,6 +770,19 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarVisibilidadeMaquinas();
             resultadosContainer.style.display = 'none';
         });
+    // --- INICIALIZAÇÃO DA TRADUÇÃO ---
+        const initialLang = getInitialLanguage();
+        setLanguage(initialLang); // Aplica idioma inicial
+
+        // Adiciona listeners para os botões de idioma
+        const btnPt = document.getElementById('lang-pt');
+        const btnEn = document.getElementById('lang-en');
+        const btnEs = document.getElementById('lang-es');
+
+        if (btnPt) btnPt.addEventListener('click', () => setLanguage('pt'));
+        if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
+        if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
+        // --- FIM INICIALIZAÇÃO TRADUÇÃO ---
     }
 });
 const accordionHeaders = document.querySelectorAll('.accordion-header');
