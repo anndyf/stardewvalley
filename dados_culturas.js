@@ -210,7 +210,7 @@ const DADOS_CULTURAS = {
         "nome": "Morango",
         "custo_semente": 100,
         "tempo_crescimento": 8,
-        "tempo_renovacao": 4,
+        "tempo_renovacao": 5,
         "preco_base": 120,
         "frutos_por_colheita": 1.0,
         "estacoes": [
@@ -235,7 +235,7 @@ const DADOS_CULTURAS = {
     "vagem": {
         "nome": "Vagem",
         "custo_semente": 60,
-        "tempo_crescimento": 10,
+        "tempo_crescimento": 11,
         "tempo_renovacao": 3,
         "preco_base": 40,
         "frutos_por_colheita": 1.0,
@@ -467,7 +467,7 @@ const DADOS_CULTURAS = {
     "lupulo": {
         "nome": "Lúpulo",
         "custo_semente": 60,
-        "tempo_crescimento": 11,
+        "tempo_crescimento": 12,
         "tempo_renovacao": 1,
         "preco_base": 25,
         "frutos_por_colheita": 1.0,
@@ -827,7 +827,7 @@ const DADOS_CULTURAS = {
         "nome": "Brócolis",
         "custo_semente": 0,
         "tempo_crescimento": 8,
-        "tempo_renovacao": 4,
+        "tempo_renovacao": 5,
         "preco_base": 70,
         "frutos_por_colheita": 1.0,
         "estacoes": [
@@ -848,7 +848,7 @@ const DADOS_CULTURAS = {
     "uva": {
         "nome": "Uva",
         "custo_semente": 60,
-        "tempo_crescimento": 10,
+        "tempo_crescimento": 11,
         "tempo_renovacao": 3,
         "preco_base": 80,
         "frutos_por_colheita": 1.0,
@@ -1055,7 +1055,7 @@ const DADOS_CULTURAS = {
     "grao_de_cafe": {
         "nome": "Grão de café",
         "custo_semente": 2500,
-        "tempo_crescimento": 10,
+        "tempo_crescimento": 11,
         "tempo_renovacao": 2,
         "preco_base": 15,
         "frutos_por_colheita": 4.0,
