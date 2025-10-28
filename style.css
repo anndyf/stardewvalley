@@ -50,7 +50,7 @@ header h1 {
 
 /* Estilo para a imagem do Logo */
 .header-logo {
-  max-width: 300px; /* Limita a largura máxima do logo em telas grandes */
+  max-width: 400px; /* Limita a largura máxima do logo em telas grandes */
   width: 70%; /* Faz o logo responsivo, ocupando % da largura */
   height: auto; /* Mantém a proporção da imagem */
   margin-bottom: 5px; /* Adiciona um pequeno espaço abaixo do logo */
@@ -58,12 +58,27 @@ header h1 {
 
 /* Estilo para o subtítulo "Calculadora" */
 .header-subtitle {
-  font-family: 'Press Start 2P', cursive; /* Ou VT323 se preferir */
-  font-size: 1.5rem; /* Tamanho da fonte para desktop */
-  color: #050505; /* Sua cor definida anteriormente */
-  margin-top: 5px; /* Espaço acima do subtítulo */
-  text-align: center; /* Garante que o texto esteja centrado */
-  text-shadow: 2px 2px 3px rgba(46, 52, 64, 0.7);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1.5rem; /* Aumenta o tamanho para ser mais título */
+  color: #eceff4;   /* Cor CLARA para contrastar com fundo escuro/médio */
+  text-shadow:
+     /* Sombra principal escura para contorno */
+     2px 2px 0px #434c5e, /* Deslocada */
+     -2px -2px 0px #434c5e,
+     2px -2px 0px #434c5e,
+     -2px 2px 0px #434c5e,
+     2px 0px 0px #434c5e,
+     -2px 0px 0px #434c5e,
+     0px 2px 0px #434c5e,
+     0px -2px 0px #434c5e,
+     /* Sombra sutil extra para profundidade (opcional) */
+     3px 3px 5px rgba(0, 0, 0, 0.5);
+
+  margin-top: 10px; /* Ajusta espaço */
+  margin-bottom: 20px; /* Ajusta espaço */
+  text-align: center;
+  letter-spacing: 2px; /* Espaçamento entre letras */
+  line-height: 1.2; /* Ajusta altura da linha se quebrar */
 }
 
 
@@ -215,49 +230,85 @@ button[type="submit"]:hover { background-color: #81a1c1; box-shadow: 0 6px 12px 
 .tempo-item { color: #4c566a; font-size: 1.05rem; display: block; margin-top: 3px; }
 .input-note-table { font-size: 0.95rem; color: #5e81ac; display: block; text-align: center; margin-top: 4px; }
 
-/* Footer */
-/* Footer */
+/* Footer (Sem fundo quadrado) */
 footer {
-    text-align: center;
-    margin-top: 40px;
-    font-size: 1.15rem; /* Você já tinha isso */
-    color: #5e81ac; /* Você já tinha isso */
+    margin: 40px auto 20px auto;
+    text-align: center; /* Centraliza todo o conteúdo do footer */
+    font-family: Arial, Helvetica, sans-serif; /* <-- FONTE SIMPLES AQUI */
+    font-size: 1rem; /* Ajuste o tamanho base para a fonte simples */
+    color: #4c566a;
 
-    /* ----- NOVAS LINHAS PARA LEGIBILIDADE ----- */
-    background-color: rgba(236, 239, 244, 0.75); /* Fundo azul-acinzentado claro (eceff4) com 75% de opacidade */
-    padding: 15px 10px; /* Adiciona um respiro interno */
-    border-radius: 8px; /* Cantos arredondados (opcional) */
-    max-width: 600px; /* Limita a largura do fundo (opcional) */
-    margin-left: auto; /* Centraliza o rodapé se max-width for usado */
-    margin-right: auto; /* Centraliza o rodapé se max-width for usado */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave (opcional) */
 }
 
-/* Garante que o link dentro do rodapé também contraste */
+/* Garante legibilidade para TODOS os parágrafos no footer */
+footer p {
+    color: #eceff4; /* Cor clara para texto */
+    text-shadow:
+        /* Sombra escura para contorno */
+        1px 1px 0px #2e3440, /* Cor bem escura */
+       -1px -1px 0px #2e3440,
+        1px -1px 0px #2e3440,
+       -1px 1px 0px #2e3440,
+        /* Sombra extra com desfoque */
+        2px 2px 3px rgba(0, 0, 0, 0.7);
+    margin-bottom: 10px; /* Adiciona espaço entre as linhas */
+    /* O width: 100% e text-align: center herdados podem ser removidos se o footer não for mais flex */
+}
+
+/* Remove margem extra do último elemento */
+footer > *:last-child {
+    margin-bottom: 0;
+}
+
+
+/* Estilo para links continua importante para contraste */
 footer a {
-    color: #434c5e; /* Cor mais escura para o link */
-    text-decoration: none;
-    font-weight: bold; /* Deixa o link mais forte */
+    color: #88c0d0; /* Cor clara azulada para links */
+    text-decoration: underline; /* Sublinhado para indicar link */
+    font-weight: bold;
+    /* Herda text-shadow do 'footer p' ou defina um específico se necessário */
 }
-
 footer a:hover {
-    text-decoration: underline;
-    color: #d08770; /* Cor de destaque no hover (opcional) */
+    color: #b48ead; /* Cor roxa no hover */
 }
 
-/* Estilo para a linha do desenvolvedor (se você usou a classe) */
+/* Ajustes específicos podem ser necessários */
 footer p.desenvolvedor {
     font-size: 1.0rem;
-    color: #4c566a;
-    margin-top: 5px;
+    /* color: #eceff4; */ /* Já definido em footer p */
+}
+footer p.desenvolvedor a {
+    color: #a3be8c; /* Cor verde clara para link do dev */
+}
+footer p.desenvolvedor a:hover{
+    color: #ebcb8b; /* Cor amarela no hover */
 }
 
-/* (Opcional) Adicionar uma sombra leve ao texto para contraste extra */
-footer p {
- text-shadow: 1px 1px 2px rgba(216, 222, 233, 0.6); /* Sombra clara sutil (d8dee9 com opacidade) */
+.creator-credit p {
+    font-size: 0.9em;
+    /* color: #eceff4; */ /* Já definido em footer p */
+    margin-bottom: 5px;
+}
+.creator-credit img {
+    display: block;
+    margin: 5px auto 0 auto; /* Ajusta margem para espaçamento */
+    image-rendering: pixelated;
+    width: 128px;
+    outline: none;
+    border: none;
 }
 
-/* ----- Seção de Notas Explicativas (Acordeão Customizado) ----- */
+#contador-visitas {
+     margin-top: 10px; /* Adiciona espaço acima do contador */
+}
+#contador-visitas a { /* Link de atribuição */
+    font-size: 0.8em;
+    color: #d8dee9 !important; /* Cor clara, usa !important para sobrescrever inline style se houver */
+    text-decoration: none;
+    display: block;
+    margin-top: 4px;
+    text-shadow: 1px 1px 1px #2e3440; /* Sombra sutil no link também */
+}
 
 .notas-container {
     margin-top: 40px;
@@ -416,6 +467,13 @@ footer p {
     margin-bottom: 0;
 }
 
+/* Estilo para a nota "Insuficiente" na tabela */
+.insuficiente-nota {
+    color: #bf616a; /* Cor vermelha suave (mesma do lucro negativo) */
+    font-style: italic;
+    font-size: 0.9em; /* Um pouco menor */
+}
+
 /* ----- RESPONSIVIDADE ----- */
 @media screen and (max-width: 850px) { /* Tabela Mobile */
     #detalhes table { font-size: 1.1rem; }
@@ -447,6 +505,76 @@ footer p {
     }
 }
 
+/* ----- Seletor de Idioma Estilizado ----- */
+.language-selector {
+    text-align: center;
+    margin-bottom: 25px; /* Aumenta um pouco o espaço */
+    padding: 10px;
+    /* Opcional: fundo sutil para destacar a área */
+    /* background-color: rgba(216, 222, 233, 0.3); /* d8dee9 com opacidade */
+    /* border-radius: 6px; */
+    /* display: inline-block; /* Para centralizar apenas os botões */
+    /* margin-left: auto; */
+    /* margin-right: auto; */
+}
+
+.language-selector button {
+    font-family: 'Press Start 2P', cursive; /* Fonte pixelada */
+    font-size: 0.8rem; /* Tamanho da fonte */
+    color: #eceff4; /* Texto claro */
+    background-color: #5e81ac; /* Fundo azul acinzentado */
+    border: 3px solid #4c566a; /* Borda mais escura */
+    padding: 8px 15px; /* Espaçamento interno */
+    border-radius: 5px; /* Cantos levemente arredondados */
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    text-shadow: 1px 1px #434c5e; /* Sombra sutil no texto */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Sombra no botão */
+    margin-bottom: 8px;
+}
+
+.language-selector button:hover {
+    background-color: #81a1c1; /* Cor mais clara no hover */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.language-selector button:active {
+    transform: translateY(1px); /* Efeito de pressionar */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.language-selector button:last-child {
+    margin-bottom: 0;
+}
+/* --- Estilo para o botão ATIVO --- */
+.language-selector button.active {
+    background-color: #8fbcbb; /* Cor de destaque (verde-azulado) */
+    color: #2e3440; /* Texto mais escuro */
+    border-color: #81a1c1; /* Borda diferente */
+    cursor: default; /* Não parece clicável quando já ativo */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Sombra interna */
+    text-shadow: none;
+    transform: none; /* Cancela efeito de pressionar */
+}
+/* Estilo para a frase de seleção de idioma */
+.language-prompt {
+    font-family: 'VT323', monospace; /* Ou 'Press Start 2P' */
+    font-size: 1.1rem;
+    color: #eceff4; /* MUDANÇA: Cor clara para contrastar com sombra escura */
+    text-align: center;
+    margin-bottom: 10px; /* Aumentei um pouco o espaço antes dos botões */
+    margin-top: -10px;
+
+    /* ADICIONADO: Sombra para legibilidade */
+    text-shadow:
+        /* Sombra principal escura (sem desfoque) */
+        1px 1px 0px #2e3440, /* Cor bem escura da paleta */
+       -1px -1px 0px #2e3440,
+        1px -1px 0px #2e3440,
+       -1px 1px 0px #2e3440,
+        /* Sombra sutil extra com desfoque (opcional) */
+        2px 2px 2px rgba(0, 0, 0, 0.5);
+}
 /* ----- RESPONSIVIDADE ----- */
 
 @media (max-width: 1000px) {
@@ -459,7 +587,7 @@ footer p {
 
     /* --- AJUSTES DO NOVO CABEÇALHO --- */
     .header-logo {
-        max-width: 250px; /* Reduz um pouco o tamanho máximo */
+        max-width: 300px; /* Reduz um pouco o tamanho máximo */
         width: 65%;
     }
     .header-subtitle {
@@ -484,11 +612,11 @@ footer p {
 @media (max-width: 540px) {
     /* --- AJUSTES ADICIONAIS DO NOVO CABEÇALHO --- */
     .header-logo {
-        max-width: 200px; /* Reduz mais o tamanho máximo */
+        max-width: 300px; /* Reduz mais o tamanho máximo */
         width: 60%;
     }
     .header-subtitle {
-        font-size: 1.1rem; /* Reduz mais a fonte do subtítulo */
+        font-size: 1rem; /* Reduz mais a fonte do subtítulo */
     }
      header h1 { /* Ajusta margem e gap do container H1 */
         gap: 2px;
@@ -504,6 +632,28 @@ footer p {
     #detalhes td { padding-left: 50% !important; }
 
     /* Outras regras específicas para 540px */
+}
+@media (max-width: 450px) {
+    .language-selector {
+        display: flex; /* Ativa flexbox em telas pequenas */
+        flex-direction: column; /* Empilha os botões verticalmente */
+        align-items: center; /* Centraliza os botões empilhados */
+        gap: 10px; /* Espaço vertical entre os botões empilhados */
+    }
+
+    .language-selector button {
+        width: 80%; /* Faz os botões ocuparem mais largura (opcional) */
+        max-width: 200px; /* Limita a largura máxima (opcional) */
+        margin-bottom: 0; /* Remove margem inferior individual, pois 'gap' cuida disso */
+    }
+     .language-selector button:last-child {
+        margin-bottom: 0; /* Garante que o último não tenha margem extra */
+    }
+    .header-subtitle {
+        font-size: 1.6rem;
+         text-shadow: /* Sombra ainda menor */
+           1px 1px 0px #434c5e, 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
 }
 
 /* ----- FIM RESPONSIVIDADE ----- */
