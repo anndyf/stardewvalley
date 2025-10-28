@@ -135,8 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
      }
 
-    // --- 4. LÓGICA DE CÁLCULO (AJUSTADA V4.13) ---
-    // (Esta seção permanece IDÊNTICA à sua versão v4.14)
+// --- 4. LÓGICA DE CÁLCULO (AJUSTADA para TOTAIS DA ESTAÇÃO na Tabela) ---
     function calcularLucro(event) {
         event.preventDefault();
         const inputs = getInputs();
@@ -146,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const cultura = DADOS_CULTURAS[inputs.cultivoId];
         const DIAS_CALCULO = inputs.dias;
 
-        // --- CÁLCULOS SEPARADOS ---
-        // 1. Potencial Total na Estação (para Resumo e Lucro/Dia)
+        // --- CÁLCULOS BASE ---
+        // 1. Potencial Total na Estação
         const custoTotalSementesEstacao = cultura.custo_semente * inputs.quantidade; // Custo inicial
         let colheitasPorPlantaEstacao = 0;
         if (cultura.tempo_crescimento > 0) {
@@ -156,52 +155,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     colheitasPorPlantaEstacao = 1 + Math.floor((DIAS_CALCULO - cultura.tempo_crescimento) / cultura.tempo_renovacao);
                 }
             } else { // Não Renovável (Ciclos)
-                colheitasPorPlantaEstacao = Math.floor((DIAS_CALCULO - 1) / cultura.tempo_crescimento);
+                // Ajuste: Calcula colheitas totais na estação (considerando replantio)
+                 colheitasPorPlantaEstacao = Math.floor(DIAS_CALCULO / cultura.tempo_crescimento);
             }
         }
         colheitasPorPlantaEstacao = Math.max(0, colheitasPorPlantaEstacao);
-        // Total de frutos colhidos ao longo de TODA a estação
         const totalFrutosEstacao = Math.floor(colheitasPorPlantaEstacao * cultura.frutos_por_colheita * inputs.quantidade);
 
-        // 2. Resultado de UM Ciclo de Colheita (para Tabela Comparativa)
-        const custoTotalSementesCiclo = cultura.custo_semente * inputs.quantidade; // Custo para plantar uma vez
-        // Quantidade de frutos colhidos em UMA colheita (ou ciclo, para renováveis)
-        const totalFrutosCiclo = Math.floor(cultura.frutos_por_colheita * inputs.quantidade);
-        // --- FIM DOS CÁLCULOS SEPARADOS ---
+        // 2. Custo Real da Estação (Considera replantio para não renováveis)
+        const custoRealEstacao = (cultura.tempo_renovacao === 0 && colheitasPorPlantaEstacao > 0)
+                                 ? (cultura.custo_semente * inputs.quantidade * colheitasPorPlantaEstacao)
+                                 : custoTotalSementesEstacao;
+        // --- FIM CÁLCULOS BASE ---
 
 
-        // 4.3. Venda Direta
+        // 4.3. Venda Direta (Calculado para a ESTAÇÃO)
         const precoVendaDiretaUnitario = cultura.preco_base * MULTIPLICADOR_QUALIDADE[inputs.qualidade];
         const modProfissaoDireta = (inputs.profissao === 'cultivador') ? 1.1 : 1.0;
         const precoVendaDiretaFinal = precoVendaDiretaUnitario * modProfissaoDireta;
 
-        // Venda Direta - Lucro de UM ciclo (para tabela)
-        const receitaDiretaCiclo = precoVendaDiretaFinal * totalFrutosCiclo;
-        const lucroDiretoCiclo = receitaDiretaCiclo - custoTotalSementesCiclo;
-
-        // Venda Direta - Lucro/Dia MÉDIO da estação (para tabela e resumo)
         const receitaDiretaEstacao = precoVendaDiretaFinal * totalFrutosEstacao;
-        // Custo real da estação (considera replantio para não renováveis)
-        const custoRealEstacaoDireta = (cultura.tempo_renovacao === 0 && colheitasPorPlantaEstacao > 0) ? custoTotalSementesCiclo * colheitasPorPlantaEstacao : custoTotalSementesEstacao;
-        const lucroDiretoEstacao = receitaDiretaEstacao - custoRealEstacaoDireta;
+        const lucroDiretoEstacao = receitaDiretaEstacao - custoRealEstacao; // Usa custo real
         const lucroDiaDiretoEstacao = (DIAS_CALCULO > 0) ? (lucroDiretoEstacao / DIAS_CALCULO) : 0;
 
         const resultados = {
             'direta': {
                 nome: `Venda Direta`,
                 qualidade: inputs.qualidade,
-                totalProdutos: totalFrutosCiclo, // Produtos de 1 ciclo
-                receitaTotal: receitaDiretaCiclo, // Receita de 1 ciclo
-                custoTotal: custoTotalSementesCiclo, // Custo de 1 ciclo
-                lucro: lucroDiretoCiclo,          // Lucro de 1 ciclo
-                lucroDia: lucroDiaDiretoEstacao,   // Lucro/Dia MÉDIO da estação
-                tempoTotal: null,
+                totalProdutos: totalFrutosEstacao, // Produtos da ESTAÇÃO
+                receitaTotal: receitaDiretaEstacao, // Receita da ESTAÇÃO
+                custoTotal: custoRealEstacao,     // Custo REAL da ESTAÇÃO
+                lucro: lucroDiretoEstacao,        // Lucro da ESTAÇÃO
+                lucroDia: lucroDiaDiretoEstacao,  // Lucro/Dia MÉDIO da estação
+                tempoTotal: null, // Venda é instantânea
                 tempoItem: null,
                 itensConsumidos: 1
             }
         };
 
-        // 4.4. Produtos Artesanais
+        // 4.4. Produtos Artesanais (Calculado para a ESTAÇÃO)
         for (const tipoId in cultura.produtos_artesanais) {
             if (tipoId === 'mel_de_flor') continue;
             const produtoInfo = PRODUTOS_ARTESANAIS_INFO[tipoId];
@@ -214,45 +206,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 itensConsumidos = 5;
             }
 
-            // Produtos e Lucro de UM ciclo (para tabela)
-            const totalProdutosFeitosCiclo = Math.floor(totalFrutosCiclo / itensConsumidos);
-            const receitaArtesanalCiclo = precoUnitarioFinal * totalProdutosFeitosCiclo;
-            const lucroArtesanalCiclo = receitaArtesanalCiclo - custoTotalSementesCiclo;
-
-            // Lucro/Dia MÉDIO da estação (para tabela e resumo)
+            // Produtos, Receita e Lucro da ESTAÇÃO INTEIRA
             const totalProdutosFeitosEstacao = Math.floor(totalFrutosEstacao / itensConsumidos);
             const receitaArtesanalEstacao = precoUnitarioFinal * totalProdutosFeitosEstacao;
-            // Custo real da estação (considera replantio para não renováveis)
-            const custoRealEstacaoArtesao = (cultura.tempo_renovacao === 0 && colheitasPorPlantaEstacao > 0) ? custoTotalSementesCiclo * colheitasPorPlantaEstacao : custoTotalSementesEstacao;
-            const lucroArtesanalEstacao = receitaArtesanalEstacao - custoRealEstacaoArtesao;
+            const lucroArtesanalEstacao = receitaArtesanalEstacao - custoRealEstacao; // Usa custo real
             const lucroDiaArtesanalEstacao = (DIAS_CALCULO > 0) ? (lucroArtesanalEstacao / DIAS_CALCULO) : 0;
 
-            let numMaquinasParaProduto = 0;
-             switch (produtoInfo.maquina) {
-                case 'jarra': numMaquinasParaProduto = inputs.maquinas.jarra; break;
-                case 'barril': numMaquinasParaProduto = inputs.maquinas.barril; break;
-                case 'desidratador': numMaquinasParaProduto = inputs.maquinas.desidratador; break;
-                case 'oleo': numMaquinasParaProduto = inputs.maquinas.oleo; break;
-                default: numMaquinasParaProduto = 0;
+             // Tempo total baseado nos produtos da ESTAÇÃO
+             let tempoProcessamentoTotalEstacao = "N/A";
+             if (totalProdutosFeitosEstacao > 0) {
+                let numMaquinasParaProduto = 0;
+                switch (produtoInfo.maquina) {
+                    case 'jarra': numMaquinasParaProduto = inputs.maquinas.jarra; break;
+                    case 'barril': numMaquinasParaProduto = inputs.maquinas.barril; break;
+                    case 'desidratador': numMaquinasParaProduto = inputs.maquinas.desidratador; break;
+                    case 'oleo': numMaquinasParaProduto = inputs.maquinas.oleo; break;
+                    default: numMaquinasParaProduto = 0;
+                }
+                tempoProcessamentoTotalEstacao = calcularTempoProcessamento(totalProdutosFeitosEstacao, numMaquinasParaProduto, produtoInfo.tempo_min);
+            } else {
+                 // Se não produz nada na estação (ex: desidratador com poucos frutos)
+                 tempoProcessamentoTotalEstacao = (itensConsumidos > 1) ? null : "N/A"; // Usa null para indicar 'Insuficiente'
             }
 
-            // Tempo total baseado nos produtos de UM ciclo
-            const tempoProcessamentoTotalCiclo = calcularTempoProcessamento(totalProdutosFeitosCiclo, numMaquinasParaProduto, produtoInfo.tempo_min);
 
             resultados[tipoId] = {
                 nome: produtoInfo.nome,
-                totalProdutos: totalProdutosFeitosCiclo, // Produtos de 1 ciclo
-                receitaTotal: receitaArtesanalCiclo,    // Receita de 1 ciclo
-                custoTotal: custoTotalSementesCiclo,    // Custo de 1 ciclo
-                lucro: lucroArtesanalCiclo,          // Lucro de 1 ciclo
+                totalProdutos: totalProdutosFeitosEstacao > 0 ? totalProdutosFeitosEstacao : (itensConsumidos > 1 ? null : 0), // Produtos da ESTAÇÃO (null se insuficiente)
+                receitaTotal: totalProdutosFeitosEstacao > 0 ? receitaArtesanalEstacao : (itensConsumidos > 1 ? null : 0),    // Receita da ESTAÇÃO (null se insuficiente)
+                custoTotal: custoRealEstacao,     // Custo REAL da ESTAÇÃO
+                lucro: totalProdutosFeitosEstacao > 0 ? lucroArtesanalEstacao : (itensConsumidos > 1 ? null : -custoRealEstacao), // Lucro da ESTAÇÃO (null se insuficiente, ou negativo se produz 0)
                 lucroDia: lucroDiaArtesanalEstacao,   // Lucro/Dia MÉDIO da estação
-                tempoTotal: tempoProcessamentoTotalCiclo, // Tempo para processar 1 ciclo
+                tempoTotal: tempoProcessamentoTotalEstacao, // Tempo para processar TUDO (null se insuficiente)
                 tempoItem: produtoInfo.tempo_min,
                 itensConsumidos: itensConsumidos
             };
         }
 
-        // 4.5. Mel
+        // 4.5. Mel (Cálculos já são baseados na estação)
         if (cultura.produtos_artesanais.mel_de_flor && inputs.maquinas.apiario > 0) {
             const produtoInfo = PRODUTOS_ARTESANAIS_INFO['mel_de_flor'];
             const produtoPrecos = cultura.produtos_artesanais.mel_de_flor;
@@ -262,39 +253,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const receitaMel = totalMel * precoMelUnitario;
             const lucroMel = receitaMel;
             const lucroDiaMel = (DIAS_CALCULO > 0) ? (lucroMel / DIAS_CALCULO) : 0;
-            // Custo real da estação para a flor base (considera replantio)
-            const custoRealEstacaoFlor = (cultura.tempo_renovacao === 0 && colheitasPorPlantaEstacao > 0) ? custoTotalSementesCiclo * colheitasPorPlantaEstacao : custoTotalSementesEstacao;
 
-
-            // O card combinado mostra o lucro TOTAL da estação
+            // Venda Direta + Mel (Resultados da ESTAÇÃO)
             resultados['direta_e_mel'] = {
                 nome: `Venda Direta + Mel`,
                 qualidade: inputs.qualidade,
-                totalProdutos: null, // Não aplicável
+                totalProdutos: totalFrutosEstacao, // Frutos da estação
                 receitaTotal: receitaDiretaEstacao + receitaMel, // Receita total estação
-                custoTotal: custoRealEstacaoFlor, // Custo real da estação
+                custoTotal: custoRealEstacao, // Custo real da estação (flor)
                 lucro: lucroDiretoEstacao + lucroMel,    // Lucro total estação
                 lucroDia: lucroDiaDiretoEstacao + lucroDiaMel, // Lucro/Dia estação
                 tempoTotal: null,
                 tempoItem: null,
                 itensConsumidos: 1
             };
-             // O card só do mel mostra o lucro TOTAL do mel na estação
+             // Apenas Mel (Resultados da ESTAÇÃO)
              resultados['mel_de_flor'] = {
                 nome: `Apenas Mel`,
                 totalProdutos: totalMel, // Total de mel na estação
                 receitaTotal: receitaMel, // Receita total estação
-                custoTotal: 0, // Custo está na flor
+                custoTotal: 0, // Custo está na flor (já contabilizado em direta_e_mel)
                 lucro: lucroMel,        // Lucro total estação
                 lucroDia: lucroDiaMel,    // Lucro/Dia estação
-                tempoTotal: `~4 dias/colheita`,
-                tempoItem: produtoInfo.tempo_min,
+                tempoTotal: `~4 dias/colheita`, // Tempo do ciclo do mel
+                tempoItem: produtoInfo.tempo_min, // Tempo por colheita do apiário
                 itensConsumidos: 1
             };
         }
 
-        // Passa custo da estação, colheitas da estação, frutos do CICLO e frutos da ESTAÇÃO
-        atualizarUI(cultura, inputs, custoTotalSementesEstacao, colheitasPorPlantaEstacao, totalFrutosCiclo, totalFrutosEstacao, resultados, DIAS_CALCULO);
+        // Passa custo REAL da estação e TOTAIS da estação para UI
+        atualizarUI(cultura, inputs, custoRealEstacao, colheitasPorPlantaEstacao, totalFrutosEstacao, resultados, DIAS_CALCULO);
     }
 
     function getInputs() {
@@ -363,34 +351,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return nomes[tipoId] || (dados && dados.nome) || tipoId;
      }
 
-    // --- 5. ATUALIZAÇÃO DA INTERFACE (V4.14 - Ajusta "Total Frutos" no Resumo) ---
-    // (Esta seção permanece IDÊNTICA à sua versão v4.14)
-    function atualizarUI(cultura, inputs, custoTotalEstacao, colheitasEstacao, frutosCiclo, frutosEstacao, resultados, diasCalculo) {
+// --- 5. ATUALIZAÇÃO DA INTERFACE (AJUSTADA para TOTAIS DA ESTAÇÃO na Tabela) ---
+    function atualizarUI(cultura, inputs, custoRealEstacao, colheitasEstacao, totalFrutosEstacao, resultados, diasCalculo) {
         resultadosContainer.style.display = 'block';
 
-        // Atualiza Resumo (Usa totais da ESTAÇÃO, exceto frutos para ciclo único)
+        // --- ATUALIZA RESUMO ---
         resumoCultivo.textContent = `${inputs.quantidade}x ${cultura.nome} (${diasCalculo} dias)`;
         totalSementesEl.textContent = formatarNumero(inputs.quantidade);
-        custoTotalEl.textContent = `${formatarNumero(cultura.tempo_renovacao === 0 && colheitasEstacao > 0 ? cultura.custo_semente * inputs.quantidade * colheitasEstacao : custoTotalEstacao)}g`; // Custo Estação REAL
+        custoTotalEl.textContent = `${formatarNumero(custoRealEstacao)}g`; // Mostra Custo REAL da estação
         custoSementeUnitarioEl.textContent = `${formatarNumero(cultura.custo_semente)}g`;
         precoBaseUnitarioEl.textContent = `${formatarNumero(cultura.preco_base)}g`;
-        totalColheitasEl.textContent = `${formatarNumero(colheitasEstacao)} (ciclos/ladrilho)`;
-
-        // ATUALIZAÇÃO V4.14: Decide qual total de frutos mostrar no Resumo
-        if (cultura.tempo_renovacao === 0) { // Colheita Única
-            totalFrutosEl.textContent = `${formatarNumero(frutosCiclo)} (por ciclo)`;
-        } else { // Colheita Múltipla
-            totalFrutosEl.textContent = formatarNumero(frutosEstacao); // Total da Estação
-        }
+        totalColheitasEl.textContent = `${formatarNumero(colheitasEstacao)} (colheitas)`;
+        // Total de Frutos no resumo agora sempre mostra o total da estação
+        totalFrutosEl.textContent = formatarNumero(totalFrutosEstacao);
 
         const imagemUrl = cultura.imagem_url || '';
         resumoImagemCultivoEl.src = imagemUrl;
         resumoImagemCultivoEl.alt = cultura.nome;
         resumoImagemCultivoEl.style.display = imagemUrl ? 'inline-block' : 'none';
 
-        // Limpa e Cria a Tabela (Lógica V4.13)
+        // --- CRIA TABELA ---
         detalhesContainer.innerHTML = '';
-        // FIX: Criar o contêiner da tabela que o CSS V4.x espera
         const tableContainer = document.createElement('div');
         tableContainer.className = 'table-container';
         detalhesContainer.appendChild(tableContainer);
@@ -400,16 +381,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = document.createElement('tbody');
         table.appendChild(thead);
         table.appendChild(tbody);
-        
-        // Ordena pelo Lucro/Dia da Estação para melhor comparação de rentabilidade
+
         const resultadosOrdenados = Object.entries(resultados).sort(([, a], [, b]) => b.lucroDia - a.lucroDia);
         const headerRow = document.createElement('tr');
         const thMetrica = document.createElement('th');
         thMetrica.textContent = 'Métrica';
         headerRow.appendChild(thMetrica);
-        
-        const colHeaders = []; // Para usar nos 'data-label'
-        
+
+        const colHeaders = [];
+
         resultadosOrdenados.forEach(([tipoId, dados]) => {
             const thMetodo = document.createElement('th');
             const nomeCabecalho = getNomeCabecalho(tipoId, dados);
@@ -420,31 +400,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         thead.appendChild(headerRow);
 
+        // --- NOMES DAS MÉTRICAS ATUALIZADOS ---
         const metricas = [
-            { key: 'totalProdutos', label: 'Rendimento' },
-            { key: 'receitaTotal', label: 'Receita' },
-            { key: 'custoTotal', label: 'Custo', classe_tr: 'cost-row'},
-            { key: 'lucro', label: 'Lucro', classe_tr: 'profit-row'},
-            { key: 'lucroDia', label: 'Lucro por Dia' },
+            { key: 'totalProdutos', label: 'Rendimento (Estação)' },
+            { key: 'receitaTotal', label: 'Receita (Estação)' },
+            { key: 'custoTotal', label: 'Custo (Estação)', classe_tr: 'cost-row'}, // Custo total da estação
+            { key: 'lucro', label: 'Lucro (Estação)', classe_tr: 'profit-row'},    // Lucro total da estação
+            { key: 'lucroDia', label: 'Lucro por Dia' },    // Média diária
             { key: 'tempoItem', label: 'Tempo por Item' },
-            { key: 'tempoTotal', label: 'Tempo Total'},
+            { key: 'tempoTotal', label: 'Tempo Total'}, // Tempo para processar TUDO
             { key: 'itensConsumidos', label: 'Itens p/ Processo' }
         ];
 
         metricas.forEach(metrica => {
-            let temMetrica = resultadosOrdenados.some(([, dados]) => dados[metrica.key] !== null && typeof dados[metrica.key] !== 'undefined');
-             if (metrica.key === 'itensConsumidos') {
-                 temMetrica = resultadosOrdenados.some(([, dados]) => dados.itensConsumidos && dados.itensConsumidos > 1);
-            }
-            if (metrica.key === 'tempoItem') {
-                temMetrica = resultadosOrdenados.some(([, dados]) => dados.tempoItem !== null && dados.tempoItem > 0);
-            }
-             if (metrica.key === 'custoTotal') {
-                 temMetrica = resultadosOrdenados.some(([tipoId, dados]) => tipoId !== 'mel_de_flor' && dados.custoTotal !== null);
-             }
-             if (metrica.key === 'totalProdutos') {
-                  temMetrica = resultadosOrdenados.some(([tipoId, dados]) => tipoId !== 'direta_e_mel' && dados.totalProdutos !== null);
-             }
+            // Lógica para exibir a linha (simplificada, pois a maioria dos valores deve existir agora)
+             let temMetrica = resultadosOrdenados.some(([, dados]) => {
+                const valor = dados[metrica.key];
+                // Itens p/ Processo só mostra se for > 1 em algum método
+                if (metrica.key === 'itensConsumidos') return dados.itensConsumidos && dados.itensConsumidos > 1;
+                 // Tempo por item só mostra se for > 0 em algum método
+                if (metrica.key === 'tempoItem') return dados.tempoItem !== null && dados.tempoItem > 0;
+                 // Rendimento não mostra para Mel Puro
+                if (metrica.key === 'totalProdutos' && dados.nome === 'Apenas Mel') return false;
+                 // Custo não mostra para Mel Puro
+                 if (metrica.key === 'custoTotal' && dados.nome === 'Apenas Mel') return false;
+                 // Tempo Total não mostra para Venda e Mel Puro
+                if (metrica.key === 'tempoTotal' && (dados.nome === 'Venda Direta' || dados.nome === 'Venda Direta + Mel' || dados.nome === 'Apenas Mel')) return false;
+
+                // Para as outras métricas, verifica se o valor não é null/undefined
+                return valor !== null && typeof valor !== 'undefined';
+            });
 
             if (temMetrica) {
                 const row = document.createElement('tr');
@@ -454,49 +439,84 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tdLabel = document.createElement('td');
                 tdLabel.textContent = metrica.label;
                 row.appendChild(tdLabel);
-                
+
                 resultadosOrdenados.forEach(([tipoId, dados], index) => {
                     const tdValor = document.createElement('td');
                     tdValor.setAttribute('data-label', colHeaders[index]); // Adiciona o data-label
                     let valor = dados[metrica.key];
                     let conteudoFormatado = '';
-                    
-                    if (valor !== null && typeof valor !== 'undefined') {
+                    const INDICADOR_INSUFICIENTE = "Insuficiente";
+                    const isDirectSale = tipoId === 'direta' || tipoId === 'direta_e_mel';
+                    const isPureHoney = tipoId === 'mel_de_flor';
+                    const isProcessingMetricPotentiallyNull = ['totalProdutos', 'receitaTotal', 'lucro', 'tempoTotal'].includes(metrica.key);
+
+
+                    // --- LÓGICA DE EXIBIÇÃO CORRIGIDA ---
+
+                    // 1. Verifica caso específico de "Insuficiente"
+                    // (Valor é null, é métrica de processamento, requer >1 item, E NÃO é venda direta)
+                    if (valor === null && isProcessingMetricPotentiallyNull && dados.itensConsumidos > 1 && !isDirectSale) {
+                        conteudoFormatado = `<span class="insuficiente-nota">${INDICADOR_INSUFICIENTE}</span>`;
+                    }
+                    // 2. Trata outros casos onde '-' é esperado (mesmo se valor for null ou 0)
+                    else if ((metrica.key === 'tempoTotal' || metrica.key === 'tempoItem') && isDirectSale) {
+                         conteudoFormatado = '-'; // Tempo não aplicável à venda
+                    } else if (metrica.key === 'tempoTotal' && isPureHoney) {
+                         conteudoFormatado = '-'; // Tempo Total não aplicável a Mel Puro isolado (usa o texto ~4dias)
+                         if (dados.tempoTotal) { // A menos que tenhamos um texto específico como "~4 dias/colheita"
+                              conteudoFormatado = `<span class="tempo-total">${dados.tempoTotal}</span>`;
+                         }
+                    } else if (metrica.key === 'custoTotal' && isPureHoney) {
+                         conteudoFormatado = '-'; // Custo não aplicável a Mel Puro isolado
+                    } else if (metrica.key === 'totalProdutos' && isPureHoney) {
+                         // Mostra o total de mel se o valor existir
+                         conteudoFormatado = (valor !== null && typeof valor !== 'undefined') ? formatarNumero(valor) : '-';
+                    } else if (metrica.key === 'totalProdutos' && tipoId === 'direta_e_mel') {
+                         // Mostra o total de frutos para Venda+Mel
+                          conteudoFormatado = (totalFrutosEstacao !== null && typeof totalFrutosEstacao !== 'undefined') ? formatarNumero(totalFrutosEstacao) : '-';
+                    }
+                    // 3. Formata valores válidos (não nulos/undefined) para os casos restantes
+                    else if (valor !== null && typeof valor !== 'undefined') {
                         if (metrica.key === 'totalProdutos') {
-                             conteudoFormatado = (tipoId !== 'direta_e_mel') ? formatarNumero(valor) : '-';
+                             conteudoFormatado = formatarNumero(valor);
                         } else if (metrica.key === 'receitaTotal' || metrica.key === 'custoTotal' || metrica.key === 'lucro') {
-                            if (metrica.key === 'custoTotal' && tipoId === 'mel_de_flor') {
-                                conteudoFormatado = '-';
-                            } else {
-                                conteudoFormatado = `${formatarNumero(valor)}g`;
-                            }
+                            conteudoFormatado = `${formatarNumero(valor)}g`;
                         } else if (metrica.key === 'lucroDia') {
                             conteudoFormatado = `${formatarNumero(dados.lucroDia, 2)}g`;
                         } else if (metrica.key === 'tempoItem') {
-                            conteudoFormatado = `<span class="tempo-item">${formatarTempoIndividual(valor)}</span>`;
+                             // Mostra "Instantâneo" se tempo for 0, senão formata
+                            conteudoFormatado = (valor >= 0) ? `<span class="tempo-item">${formatarTempoIndividual(valor)}</span>` : '-';
                         } else if (metrica.key === 'tempoTotal') {
-                             conteudoFormatado = `<span class="tempo-total">${valor || 'N/A'}</span>`;
+                              // Se chegou aqui, é um tempo de processamento válido
+                              conteudoFormatado = `<span class="tempo-total">${valor || 'N/A'}</span>`;
                         } else if (metrica.key === 'itensConsumidos') {
                              conteudoFormatado = (valor > 1) ? `<span class="input-note-table">${valor}</span>` : '-';
                         } else {
-                            conteudoFormatado = valor;
+                            conteudoFormatado = valor; // Caso genérico
                         }
-                        
-                        if (metrica.key === 'lucro') {
-                            tdValor.innerHTML = `<span class="${valor >= 0 ? 'lucro-positivo' : 'lucro-negativo'}">${conteudoFormatado}</span>`;
-                        } else {
-                             tdValor.innerHTML = conteudoFormatado;
-                         }
-                    } else {
-                         tdValor.innerHTML = '-';
                     }
+                    // 4. Fallback final para qualquer outro null/undefined
+                    else {
+                         conteudoFormatado = '-';
+                    }
+                    // --- FIM LÓGICA DE EXIBIÇÃO ---
+
+
+                    // Aplica classes de lucro/negativo ou insere o HTML formatado
+                    if (conteudoFormatado.includes('insuficiente-nota')) {
+                        tdValor.innerHTML = conteudoFormatado;
+                    } else if (metrica.key === 'lucro' && valor !== null) { // Só aplica classe se valor não for null
+                        tdValor.innerHTML = `<span class="${valor >= 0 ? 'lucro-positivo' : 'lucro-negativo'}">${conteudoFormatado}</span>`;
+                    } else {
+                         tdValor.innerHTML = conteudoFormatado;
+                     }
                     row.appendChild(tdValor);
-                });
+                }); // Fim
                 tbody.appendChild(row);
             }
         });
-        
-        tableContainer.appendChild(table); // Adiciona a tabela ao contêiner
+
+        tableContainer.appendChild(table);
     }
 
     // --- 6. INICIALIZAÇÃO (COM FILTROS) ---
