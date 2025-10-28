@@ -34,28 +34,41 @@ body::before { /* Overlay para melhorar a legibilidade sobre a imagem de fundo *
 h1, h2, h3, h4, th {
     font-family: 'Press Start 2P', cursive; line-height: 1.4; color: #434c5e; /* Azul acinzentado médio */
 }
- header h1 {
-  /* Mantenha o seu estilo atual para centralizar o H1 */
-  font-size: 2rem; /* Ou o tamanho que preferir */
-  text-align: center;
-  margin-bottom: 35px; /* Ou o espaçamento que preferir */
-  color: #865102; /* Ou a cor que preferir */
-  /* Adicione line-height se o texto estiver muito colado nas imagens */
-  /* line-height: 1.5; */ /* Ajuste conforme necessário */
+header h1 {
+  /* Configura Flexbox para empilhar verticalmente */
+  display: flex;
+  flex-direction: column; /* Empilha os itens (logo e subtítulo) */
+  align-items: center; /* Centraliza horizontalmente */
+
+  /* Remove text-align se não for mais necessário (flex alinha) */
+  /* text-align: center; */
+
+  /* Ajuste margens e espaçamento conforme necessário */
+  margin-bottom: 30px; /* Espaço abaixo do cabeçalho */
+  gap: 5px; /* Espaço pequeno entre o logo e o subtítulo */
 }
 
-header h1 img {
-  /* Ajuste o tamanho das imagens se necessário */
-  width: 40px; /* Exemplo de tamanho */
-  height: 40px; /* Exemplo de tamanho */
-  /* A propriedade chave para o alinhamento vertical */
-  vertical-align: middle;
-  /* Adicione margens laterais se quiser mais espaço */
-  /* margin-left: 8px; */
-  /* margin-right: 8px; */
+/* Estilo para a imagem do Logo */
+.header-logo {
+  max-width: 300px; /* Limita a largura máxima do logo em telas grandes */
+  width: 70%; /* Faz o logo responsivo, ocupando % da largura */
+  height: auto; /* Mantém a proporção da imagem */
+  margin-bottom: 5px; /* Adiciona um pequeno espaço abaixo do logo */
 }
+
+/* Estilo para o subtítulo "Calculadora" */
+.header-subtitle {
+  font-family: 'Press Start 2P', cursive; /* Ou VT323 se preferir */
+  font-size: 1.5rem; /* Tamanho da fonte para desktop */
+  color: #050505; /* Sua cor definida anteriormente */
+  margin-top: 5px; /* Espaço acima do subtítulo */
+  text-align: center; /* Garante que o texto esteja centrado */
+  text-shadow: 2px 2px 3px rgba(46, 52, 64, 0.7);
+}
+
+
 h2.section-title {
-    font-size: 1.15rem; color: #5e81ac; border-bottom: 3px solid #88c0d0;
+    font-size: 1.15rem; color: #090909; border-bottom: 3px solid #88c0d0;
     padding-bottom: 12px; margin-bottom: 25px; display: flex; align-items: center;
     justify-content: center; gap: 15px;
 }
@@ -107,7 +120,7 @@ button[type="submit"]:hover { background-color: #81a1c1; box-shadow: 0 6px 12px 
 #resumo { margin-bottom: 40px; }
 .resumo-grid {
     display: grid; grid-template-columns: 1fr; gap: 10px; background-color: #eceff4;
-    padding: 20px; border: 3px solid #88c0d0; border-radius: 8px; font-size: 1.35rem;
+    padding: 20px; border: 3px solid #5e81ac; border-radius: 8px; font-size: 1.35rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .resumo-grid p {
@@ -247,13 +260,14 @@ footer p {
 /* ----- Seção de Notas Explicativas (Acordeão Customizado) ----- */
 
 .notas-container {
+    margin-top: 40px;
     margin-bottom: 30px;
 }
 
 /* Container principal do acordeão */
 .accordion {
     background-color: #eceff4;
-    border: 3px dashed #88c0d0;
+    border: 3px dashed #5e81ac;
     border-radius: 8px;
     overflow: hidden; /* Mantém conteúdo dentro das bordas arredondadas */
 }
@@ -274,7 +288,7 @@ footer p {
     /* Estilo do texto do cabeçalho */
     font-family: 'Press Start 2P', cursive;
     font-size: 1.1rem;
-    color: #5e81ac;
+    color: #0a0a0a;
 }
 
 .accordion-header img {
@@ -287,7 +301,7 @@ footer p {
     margin-left: auto; /* Empurra o ícone para a direita */
     font-weight: bold;
     font-size: 1.6rem; /* Tamanho do ícone */
-    color: #88c0d0;
+    color: #010101;
     transition: transform 0.2s ease-in-out; /* Animação suave */
 }
 
@@ -345,6 +359,63 @@ footer p {
 .accordion-content a { color: #5e81ac; font-weight: bold; text-decoration: none; }
 .accordion-content a:hover { text-decoration: underline; }
 
+/* ----- Estilo Específico para a Dica de Lucro (REVISADO) ----- */
+/* Coloque este bloco DEPOIS das regras gerais para .accordion-content p, se houver */
+
+.accordion-content .dica-lucro {
+    margin-top: 25px;
+    margin-bottom: 25px;
+    padding-left: 15px;
+    /* border-left: 3px solid #b48ead; */ /* Opcional */
+}
+
+/* Força a fonte VT323 nos parágrafos desta seção */
+.accordion-content div.dica-lucro p { /* Adicionado 'div' para especificidade */
+    font-family: 'VT323', monospace !important; /* FORÇA a fonte correta */
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: #434c5e;
+    margin-bottom: 1em;
+}
+
+/* Título específico desta seção */
+.accordion-content div.dica-lucro h3 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+    color: #4c566a;
+    margin-bottom: 12px;
+}
+
+/* Destaques (bold) nesta seção */
+.accordion-content div.dica-lucro p strong {
+    font-weight: normal; /* VT323 já parece bold */
+    color: #d08770 !important; /* Força a cor laranja */
+}
+
+/* Destaques (itálico/em) nesta seção */
+.accordion-content div.dica-lucro p i,
+.accordion-content div.dica-lucro p em {
+    font-style: normal;
+    color: #81a1c1 !important; /* Força a cor azul clara */
+}
+
+/* Nota final específica desta seção */
+.accordion-content div.dica-lucro p.nota-final {
+    font-family: 'VT323', monospace !important; /* FORÇA a fonte correta */
+    font-size: 1.1rem;
+    color: #5e81ac !important; /* Força a cor */
+    margin-top: 15px;
+    margin-bottom: 0;
+    border-top: 1px dotted #d8e1e8;
+    padding-top: 10px;
+    text-align: left;
+}
+
+/* Garante margem zero no último parágrafo (se for a nota) */
+.accordion-content div.dica-lucro p:last-child {
+    margin-bottom: 0;
+}
+
 /* ----- RESPONSIVIDADE ----- */
 @media screen and (max-width: 850px) { /* Tabela Mobile */
     #detalhes table { font-size: 1.1rem; }
@@ -376,20 +447,63 @@ footer p {
     }
 }
 
-@media (max-width: 1000px) { #calc-form { grid-template-columns: repeat(3, 1fr); } }
+/* ----- RESPONSIVIDADE ----- */
+
+@media (max-width: 1000px) {
+    #calc-form { grid-template-columns: repeat(3, 1fr); }
+    /* Adicione ajustes para o header aqui se necessário para 1000px */
+}
+
 @media (max-width: 768px) {
-    body { font-size: 1.2rem; } h1 { font-size: 1.5rem; }
+    body { font-size: 1.2rem; }
+
+    /* --- AJUSTES DO NOVO CABEÇALHO --- */
+    .header-logo {
+        max-width: 250px; /* Reduz um pouco o tamanho máximo */
+        width: 65%;
+    }
+    .header-subtitle {
+        font-size: 1.3rem; /* Reduz a fonte do subtítulo */
+    }
+    header h1 { /* Ajusta margem e gap do container H1 */
+        margin-bottom: 25px;
+        gap: 3px;
+        /* font-size não controla mais o H1 diretamente, mas sim o .header-subtitle */
+    }
+    /* --- FIM AJUSTES NOVO CABEÇALHO --- */
+
     #calculadora-container { padding: 20px; }
     #calc-form { grid-template-columns: repeat(2, 1fr); }
     input[type="number"], select { font-size: 1.25rem; padding: 10px 12px; }
     button[type="submit"] { font-size: 0.9rem; }
     .resumo-grid { font-size: 1.2rem; }
+
+    /* Outras regras específicas para 768px */
 }
+
 @media (max-width: 540px) {
+    /* --- AJUSTES ADICIONAIS DO NOVO CABEÇALHO --- */
+    .header-logo {
+        max-width: 200px; /* Reduz mais o tamanho máximo */
+        width: 60%;
+    }
+    .header-subtitle {
+        font-size: 1.1rem; /* Reduz mais a fonte do subtítulo */
+    }
+     header h1 { /* Ajusta margem e gap do container H1 */
+        gap: 2px;
+        margin-bottom: 20px;
+    }
+    /* --- FIM AJUSTES ADICIONAIS NOVO CABEÇALHO --- */
+
     #calc-form { grid-template-columns: 1fr; }
     h2.section-title { font-size: 1rem; gap: 10px; }
     #resumo-imagem-cultivo { width: 36px; height: 36px; }
     .resumo-grid { font-size: 1.15rem; }
     #detalhes td::before { width: 45%; font-size: 0.65rem;}
     #detalhes td { padding-left: 50% !important; }
+
+    /* Outras regras específicas para 540px */
 }
+
+/* ----- FIM RESPONSIVIDADE ----- */
